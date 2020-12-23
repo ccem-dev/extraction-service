@@ -8,9 +8,9 @@ export default class ExtrationService {
 
     try {
 
-      // await ExtrationModel.insert({
-      //   acronym: "TESTE",
-      //   activityId: "5634634t643"});
+      await ExtrationModel.insertMany({
+        acronym: "TESTE",
+        activityId: "5634634t643"});
       return new SuccessResponse();
     } catch (e) {
       console.error(e);

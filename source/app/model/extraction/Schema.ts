@@ -1,34 +1,15 @@
-import {Schema, Types} from "mongoose";
+import { Schema, Types } from "mongoose";
 import ObjectId = Types.ObjectId;
 
 const ActivitySchema: Schema = new Schema(
   {
-    objectType: {
+    acronym: {
       type: String,
       required: true
     },
-    date: {
-      type: Date,
-      default: Date.now
-    },
-    participant: {
-      type: ObjectId,
-      required: true
-    },
-    eventId: {
-      type: ObjectId
-    },
-    activated: {
-      type: Boolean,
-      default: true
-    },
-    description: {
-      type:String,
-      required: true
-    },
-    status: {
+    activityId: {
       type: String,
-      default: "PENDING"
+      required: true
     }
   },
   {
@@ -44,24 +25,24 @@ ActivitySchema.statics.exist = async function (activityId: ObjectId) {
 };
 
 ActivitySchema.statics.getByActivity = async function (activityId: ObjectId) {
-  return this.collection.findOne({ "activityId": activityId})
+  return this.collection.findOne({ "activityId": activityId })
 };
 
 ActivitySchema.statics.getExtractionByActivity = async function (id: ObjectId) {
   return this.collection.aggregate([
-      {
-        $match: {
-          "participant": id,
-          "activated": true
-        }
-      },
-      {
-        $group: {
-          "_id": "$eventId",
-          "eventIds": {$push: "$$ROOT"}
-        }
+    {
+      $match: {
+        "participant": id,
+        "activated": true
       }
-    ]
+    },
+    {
+      $group: {
+        "_id": "$eventId",
+        "eventIds": { $push: "$$ROOT" }
+      }
+    }
+  ]
   ).toArray()
 };
 

@@ -7,5 +7,5 @@ ENV DATABASE_HOSTNAME otus-database
 ENV DATABASE_PORT 27017
 ENV DATABASE_USER otus
 ENV DATABASE_PASS otus
-ENV DATABASE otus-database
+ENV DATABASE otus
 CMD node --max-old-space-size=$MEMORY --optimize-for-size --inspect server.js

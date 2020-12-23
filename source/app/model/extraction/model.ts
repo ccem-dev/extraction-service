@@ -2,7 +2,7 @@ import * as mongoose from "mongoose";
 import ExtractionSchema from "./Schema";
 
 const ModelName = 'ExtractionActivity';
-const CollectionName = 'Extraction-activity';
+const CollectionName = 'extraction-activity';
 
 let ExtractionModel = mongoose.model(ModelName, ExtractionSchema, CollectionName);
 
