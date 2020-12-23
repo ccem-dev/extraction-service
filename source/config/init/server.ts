@@ -26,6 +26,7 @@ class Server {
     App.listen(process.env.API_PORT, () => {
     });
     console.info(process.env.API_PORT)
+    this.connect();
     this.endpointsList();
   }
 

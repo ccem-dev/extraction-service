@@ -47,7 +47,7 @@ ActivitySchema.statics.getByActivity = async function (activityId: ObjectId) {
   return this.collection.findOne({ "activityId": activityId})
 };
 
-ActivitySchema.statics.getExtrationByActivity = async function (id: ObjectId) {
+ActivitySchema.statics.getExtractionByActivity = async function (id: ObjectId) {
   return this.collection.aggregate([
       {
         $match: {

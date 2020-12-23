@@ -1,7 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import bodyParser from "body-parser";
-import ExtrationRouter from "../../app/routes/ExtrationRouter";
+import ExtractionRouter from "../../app/routes/ExtractionRouter";
 
 class App {
 
@@ -30,7 +30,7 @@ class App {
       next();
     });
 
-    ExtrationRouter.initialize(this.express);
+    ExtractionRouter.initialize(this.express);
   }
 
 }

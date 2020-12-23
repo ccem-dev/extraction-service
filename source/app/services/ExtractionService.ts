@@ -1,6 +1,6 @@
 import IResponse, {InternalServerErrorResponse, NotFoundResponse, SuccessResponse} from '../utils/response';
 import {Types} from "mongoose";
-import ExtrationModel from "../model/extration/model";
+import ExtrationModel from "../model/extraction/model";
 import ObjectId = Types.ObjectId;
 
 export default class ExtrationService {
