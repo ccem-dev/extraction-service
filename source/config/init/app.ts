@@ -14,12 +14,6 @@ class App {
   }
 
   middlewares() {
-    this.express.set("DATABASE_USER", process.env.DATABASE_USER);
-    this.express.set("DATABASE_PASS", process.env.DATABASE_PASS);
-    this.express.set("DATABASE_HOSTNAME", process.env.DATABASE_HOSTNAME);
-    this.express.set("DATABASE_PORT", process.env.DATABASE_PORT);
-    this.express.set("DATABASE", process.env.DATABASE);
-    this.express.set("API_PORT", process.env.API_PORT);
     this.express.use(express.static('public'));
     this.express.use(bodyParser.json());
     this.express.use(bodyParser.urlencoded({ extended: true }));

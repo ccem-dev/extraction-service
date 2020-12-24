@@ -15,12 +15,12 @@ class Server {
       useNewUrlParser: true,
       useCreateIndex: true,
       auth: {
-        user: App.get("DATABASE_USER"),
-        password: App.get("DATABASE_PASS")
+        user: process.env.DATABASE_USER,
+        password: process.env.DATABASE_PASS
       },
     };
 
-    const url = `mongodb://${App.get("DATABASE_HOSTNAME")}:${App.get("DATABASE_PORT")}/${App.get("DATABASE")}?authSource=${App.get("DATABASE")}`;
+    const url = `mongodb://${process.env.DATABASE_HOSTNAME}:${process.env.DATABASE_PORT}/${process.env.DATABASE}?authSource=${process.env.DATABASE}`;
 
     console.log("connecting to: " + url);
 
