@@ -1,22 +1,7 @@
-import express, { Request, Response } from "express";
+import { Router } from 'express'
 import ExtractionController from "../../app/controllers/ExtractionController";
+const  ExtractionRouter = Router()
+ExtractionRouter.post("/create/:activityId", ExtractionController.create)
+ExtractionRouter.delete("/remove/:activityId", ExtractionController.remove)
 
-export default class ExtractionRouter {
-  public static initialize(app: express.Application) {
-    let basePath: string = "/extraction";
-    let createPath: string = "/create";
-    let removePath: string = "/remove";
-
-    app.post(basePath + createPath + "/:activityId", async (req: Request, res: Response) => {
-
-      await ExtractionController.create(req, res);
-
-    });
-
-    app.delete(basePath + removePath + "/:activityId", async (req: Request, res: Response) => {
-
-      await ExtractionController.remove(req, res);
-
-    });
-  }
-};
+export default ExtractionRouter

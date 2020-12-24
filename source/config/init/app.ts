@@ -1,7 +1,7 @@
 import express from "express";
 import "dotenv/config";
 import bodyParser from "body-parser";
-import ExtractionRouter from "../../app/routes/ExtractionRouter";
+import routes from "../../app/routes/Routers";
 
 class App {
 
@@ -10,6 +10,7 @@ class App {
   constructor() {
     this.express = express();
     this.middlewares();
+    this.router();
   }
 
   middlewares() {
@@ -29,8 +30,10 @@ class App {
       res.header('Content-Type', 'application/json');
       next();
     });
+  }
 
-    ExtractionRouter.initialize(this.express);
+  router() {
+    this.express.use(routes)
   }
 
 }

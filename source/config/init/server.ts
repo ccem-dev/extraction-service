@@ -1,30 +1,32 @@
 import App from "./app";
+import mongoose from "mongoose"
 const listEndpoints = require('express-list-endpoints');
-const mongoose = require("mongoose");
-
-const options = {
-  useUnifiedTopology: true,
-  useNewUrlParser: true,
-  useCreateIndex: true,
-  auth: {
-    user: App.get("DATABASE_USER"),
-    password: App.get("DATABASE_PASS")
-  },
-};
-
-const url = `mongodb://${App.get("DATABASE_HOSTNAME")}:${App.get("DATABASE_PORT")}/${App.get("DATABASE")}?authSource=${App.get("DATABASE")}`;
-
-connect()
-
-function connect() {
-  console.log("connecting to: " + url);
-  mongoose.connect(url, options);
-}
 
 class Server {
 
   constructor() {
+    this.connect()
     this.listen()
+  }
+
+  connect() {
+    const options = {
+      useUnifiedTopology: true,
+      useNewUrlParser: true,
+      useCreateIndex: true,
+      auth: {
+        user: App.get("DATABASE_USER"),
+        password: App.get("DATABASE_PASS")
+      },
+    };
+
+    const url = `mongodb://${App.get("DATABASE_HOSTNAME")}:${App.get("DATABASE_PORT")}/${App.get("DATABASE")}?authSource=${App.get("DATABASE")}`;
+
+    console.log("connecting to: " + url);
+
+    mongoose.connect(url, options)
+      .then(response => console.info("mongodb connected"))
+      .catch(error => console.info(error))
   }
 
   listen() {
