@@ -14,6 +14,7 @@ class Server {
       useUnifiedTopology: true,
       useNewUrlParser: true,
       useCreateIndex: true,
+      connectTimeoutMS: 1000,
       auth: {
         user: process.env.DATABASE_USER,
         password: process.env.DATABASE_PASS
