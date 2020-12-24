@@ -8,12 +8,6 @@ export default class ExtrationController {
       .catch(err => res.status(err.code).send(err.body));
   }
 
-  static update(req: Request, res: Response): void {
-    ExtractionService.update(req.params.activityId)
-      .then(result => res.status(result.code).send(result.body))
-      .catch(err => res.status(err.code).send(err.body));
-  }
-
   static remove(req: Request, res: Response): void {
     ExtractionService.remove(req.params.activityId)
       .then(result => res.status(result.code).send(result.body))

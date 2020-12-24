@@ -1,37 +1,61 @@
-import IResponse, {InternalServerErrorResponse, NotFoundResponse, SuccessResponse} from '../utils/response';
-import {Types} from "mongoose";
-import ExtrationModel from "../model/extraction/model";
+import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse } from '../utils/response';
+import { Types } from "mongoose";
+import ExtractionModel from "../model/extraction/ExtractionsActivity";
+import ActivityModel from "../model/activity/Activity";
+import SurveyModel from "../model/survey/Survey";
 import ObjectId = Types.ObjectId;
 
 export default class ExtrationService {
   static async create(activityId: string): Promise<IResponse> {
+    let activity
+    let survey
 
     try {
 
-      await ExtrationModel.insertMany({
-        acronym: "TESTE",
-        activityId: "5634634t643"});
-      return new SuccessResponse();
+      activity = await ExtrationService.findActivity(activityId)
+
+      if (activity) {
+        survey = await ExtrationService.findSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
+      }
+
+      console.log(survey)
+
+      console.log(activity)
+
+      return new SuccessResponse(survey);
     } catch (e) {
       console.error(e);
       throw new InternalServerErrorResponse(e);
     }
   }
 
-  static async update(activityId: string ): Promise<IResponse> {
-    let updateResult;
-
+  private static async findActivity(activityId: string) {
+    let resultActivity
     try {
-      updateResult = await ExtrationModel.updateOne({ "_id": new ObjectId(activityId) }, {});
-    } catch (e) {
+      resultActivity = await ActivityModel.findOne({
+        '_id': new ObjectId(activityId)
+      }).exec();
+
+      return resultActivity.toJSON();
+    }
+    catch (e) {
       console.error(e);
       throw new InternalServerErrorResponse(e);
     }
+  }
 
-    if (updateResult.n) {
-      return new SuccessResponse(!!updateResult.nModified);
-    } else {
-      throw new NotFoundResponse({ message: "Extration not found" })
+  private static async findSurvey(acronym: string, version: number) {
+    let resultSurvey
+    try {
+      resultSurvey = await SurveyModel.findOne({
+        'surveyTemplate.identity.acronym': acronym, 'version': version
+      }).exec();
+
+      return resultSurvey.toJSON();
+    }
+    catch (e) {
+      console.error(e);
+      throw new InternalServerErrorResponse(e);
     }
   }
 
@@ -39,7 +63,8 @@ export default class ExtrationService {
     let deleteResult;
 
     try {
-      deleteResult = await ExtrationModel.deleteOne({ "_id": new ObjectId(activityId) });
+      deleteResult
+      // = await ExtrationModel.deleteOne({ "_id": new ObjectId(activityId) });
     } catch (e) {
       console.error(e);
       throw new InternalServerErrorResponse(e);
@@ -48,7 +73,7 @@ export default class ExtrationService {
     if (deleteResult) {
       return new SuccessResponse();
     } else {
-      throw new NotFoundResponse({ message: "Extration not found"})
+      throw new NotFoundResponse({ message: "Extration not found" })
     }
   }
 
