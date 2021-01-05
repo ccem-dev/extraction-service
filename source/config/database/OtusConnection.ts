@@ -9,12 +9,12 @@ const options = {
   connectTimeoutMS: 1000, //todo: rollback to 10000
   keepAlive: 1,
   auth: {
-    user: App.get("DATABASE_USER"),
-    password: App.get("DATABASE_PASS")
+    user: process.env.DATABASE_USER,
+    password: process.env.DATABASE_PASS
   },
 };
 
-const url = `mongodb://${App.get("DATABASE_HOSTNAME")}:${App.get("DATABASE_PORT")}/${App.get("DATABASE")}?authSource=${App.get("DATABASE")}`;
+const url = `mongodb://${process.env.DATABASE_HOSTNAME}:${process.env.DATABASE_PORT}/${process.env.DATABASE}?authSource=${process.env.DATABASE}`;
 
 
 class OtusConnection {
@@ -26,19 +26,22 @@ class OtusConnection {
   }
 
   constructor() {
-    console.log('construct')
-    this.connect()
+    console.log('construct');
+    this.connect();
   }
 
   connect() {
-    console.log(url, options)
+    console.log(url, options);
 
     mongodb.connect(
       url,
       options,
       function (err: any, client: MongoClient) {
-        this.db =client.db()
-        this.client = client
+        this.db = client.db();
+        this.client = client;
+        if(err){
+          console.error(err);
+        }
       }, this
     )
   }
