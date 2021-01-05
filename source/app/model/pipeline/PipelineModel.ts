@@ -9,6 +9,11 @@ class Pipeline {
   @prop()
   public pipeline: Document[];
 
+  @prop()
+  public function?: {
+    code: string
+  };
+
 
   // public static async findBySpecies(this: ReturnModelType<typeof KittenClass>, species: string) {
   //   return this.find({ species }).exec();
@@ -16,4 +21,4 @@ class Pipeline {
   // public function: Document
 }
 
-export default getModelForClass(Pipeline)  
+export default getModelForClass(Pipeline);
