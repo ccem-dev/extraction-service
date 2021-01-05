@@ -1,4 +1,4 @@
-import { prop, getModelForClass, modelOptions } from '@typegoose/typegoose';
+import { prop, modelOptions } from '@typegoose/typegoose';
 import { BSONType } from 'mongodb';
 
 @modelOptions({ schemaOptions: { collection: 'pipeline' }, options: { automaticName: true } })
@@ -21,4 +21,4 @@ class Pipeline {
   // public function: Document
 }
 
-export default getModelForClass(Pipeline);
+export default Pipeline;

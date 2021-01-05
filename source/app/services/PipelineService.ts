@@ -2,7 +2,7 @@ import IResponse, {InternalServerErrorResponse, NotFoundResponse, SuccessRespons
 import {Types} from "mongoose";
 import ObjectId = Types.ObjectId;
 import OtusConnection from '../../config/database/OtusConnection'
-import PipelineModel from '../model/pipeline/PipelineModel';
+import PipelineModel from '../model/pipeline/Model';
 import ExtractionModel from '../model/extraction/Model';
 
 
