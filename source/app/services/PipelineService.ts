@@ -2,19 +2,32 @@ import IResponse, {InternalServerErrorResponse, NotFoundResponse, SuccessRespons
 import {Types} from "mongoose";
 import ObjectId = Types.ObjectId;
 import OtusConnection from '../../config/database/OtusConnection'
-import Pipeline from '../model/pipeline/PipelineModel'
+import PipelineModel from '../model/pipeline/PipelineModel';
+import ExtractionModel from '../model/extraction/Model';
 
-class PipelineService {    
+
+class PipelineService {
 
   constructor() {
   }
 
-  async perform (name: string): Promise<Document> {
-    let pipeline = await Pipeline.findOne({name}).exec()
-    console.log(pipeline);
-    OtusConnection.db.collection('pipeline').find()
-    
-    return null
+  async perform (name: string): Promise<IResponse> {
+    try {
+      let query = await PipelineModel.findOne({'name': name});
+      let code = new Function("return " + query["function"].code)();
+
+      let extraction = await ExtractionModel.aggregate(query.pipeline).allowDiskUse(true);
+      let result = code(extraction);
+
+      console.log('extraction result');
+      console.log(JSON.stringify(result,null, 2));
+
+      return new SuccessResponse(result);
+    }
+    catch (e) {
+      console.error(e);
+      return new NotFoundResponse(e);
+    }
   }
 
   // static async create(activityId: string): Promise<IResponse> {
@@ -32,5 +45,5 @@ class PipelineService {
   // }
 };
 
-export default new PipelineService()
+export default new PipelineService();
 
