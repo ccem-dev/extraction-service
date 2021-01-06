@@ -21,10 +21,10 @@ class ExtrationService {
         activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
         activityInfo = buildActivityInfo(activity)
         if (survey && activityFillingList.length != 0) {
-          dictionary = dictionaryCustomIdAndFillAnwser(activityFillingList, survey)
+          dictionary = dictionaryCustomIdAndFillAnswer(activityFillingList, survey)
           const extraction = await persist(activity, activityInfo, dictionary);
 
-          return new SuccessResponse(activity);
+          return new SuccessResponse(survey);
         } else {
           return new NotFoundResponse()
         }
@@ -37,7 +37,7 @@ class ExtrationService {
     }
   }
 
- async findActivity(activityId: string) {
+  async findActivity(activityId: string) {
     let resultActivity
     try {
       resultActivity = await ActivityModel.findOne({
@@ -88,8 +88,7 @@ class ExtrationService {
 
 async function persist(activity: any, activityInfo: any, dictionary: any) {
   try {
-
-    return await ExtractionModel.updateOne({ activityId: activity._id },{
+    return await ExtractionModel.updateOne({ activityId: activity._id }, {
       activityId: ObjectId(activity._id),
       acronym: activity.surveyForm.acronym,
       version: activity.surveyForm.version,
@@ -106,9 +105,9 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
       paper_realization_date: activityInfo.activityPaperRealizationDate,
       paper_interviewer: activityInfo.activityPaperEmail,
       last_finalization_date: activityInfo.activityLastFinalizationDate,
-      external_id: activity.externalID,
+      external_id: activityInfo.activityExternalId,
       obj: dictionary
-    },{ upsert: true }).exec();
+    }, { upsert: true }).exec();
 
   } catch (e) {
     console.error(e)
@@ -116,63 +115,88 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
   }
 }
 
-function dictionaryCustomIdAndFillAnwser(activityFillingList: any, survey: any) {
+function dictionaryCustomIdAndFillAnswer(activityFillingList: any, survey: any) {
   let surveyItemContainer: any[] = survey.surveyTemplate ? survey.surveyTemplate.itemContainer : []
   let answerAllQuestion: any
+  let result: any[] = []
 
-  let result = surveyItemContainer.map((question: any) => {
-    answerAllQuestion = extractionAnwserCustomID(activityFillingList, question)
-    if (answerAllQuestion) {
-      return {
-        customID: question.customID,
-        customID_answer: answerAllQuestion.customID_answer,
-        metadata: question.customID + '_metadata',
-        metadata_answer: answerAllQuestion.metadata_answer,
-        comment: question.customID + '_comment',
-        comment_answer: answerAllQuestion.comment_answer
+    surveyItemContainer.forEach((question: any) => {
+      answerAllQuestion = extractionAnswerCustomID(activityFillingList, question)
+      if (answerAllQuestion) {
+        if (answerAllQuestion.differentQuestion) {
+          // console.log(answerAllQuestion.differentQuestion)
+          answerAllQuestion.differentQuestion.forEach((items: any) => {
+            result.push(items)
+          })
+        } else {
+          result.push({
+            [question.customID]: answerAllQuestion.customID_answer,
+            [question.customID + '_metadata']: answerAllQuestion.metadata_answer,
+            [question.customID + '_comment']: answerAllQuestion.comment_answer
+          })
+        }
       }
-    }
-  })
+    })
 
-  console.log(answerAllQuestion)
-  // console.log(surveyItemContainer)
   console.log(result)
+
+  // console.log(answerAllQuestion)
+  // console.log(surveyItemContainer)
+  // console.log(result)
   return result
 }
 
-function extractionAnwserCustomID(activityFillingList: any, question: any) {
-  let customID_answer: any
-  let metadata_answer: any
-  let comment_answer: any
+function extractionAnswerCustomID(activityFillingList: any, question: any) {
+  let customID_answer: string
+  let metadata_answer: string
+  let comment_answer: string
+  let QuestionFill: any
+  let differentQuestion: any[] = []
 
-  let QuestionFill: any = activityFillingList.find((activity: any) => activity.questionID == question.templateID !== undefined)
+  QuestionFill = activityFillingList.find((activity: any) => activity.questionID === question.templateID)
 
-  console.log(QuestionFill)
-  switch (QuestionFill.answer.type) {
-    case "CalendarQuestion": {
-      console.log(QuestionFill.answer)
-      customID_answer = QuestionFill.answer.value.value
-      metadata_answer = QuestionFill.metadata.value
-      comment_answer = QuestionFill.comment
-      break;
+  if (QuestionFill) {
+    switch (QuestionFill.answer.type) {
+      case "CalendarQuestion": {
+        customID_answer = QuestionFill.answer.value ? QuestionFill.answer.value.value : ''
+        metadata_answer = QuestionFill.metadata.value
+        comment_answer = QuestionFill.comment
+        break;
+      }
+      case "CheckboxQuestion": {
+        differentQuestion = QuestionFill.answer.value.map((items: any) => {
+          return {
+            [items.option]: items.state ? 1 : 0
+          }
+        })
+        differentQuestion.push({ [question.customID + '_metadata']: QuestionFill.metadata_answer || '' })
+        differentQuestion.push({ [question.customID + '_comment']: QuestionFill.comment_answer || '' })
+        break;
+      }
+      case "GridTextQuestion": {
+        // console.log(QuestionFill.answer)
+        break;
+      }
+      case "GridIntegerQuestion": {
+        // console.log(QuestionFill.answer)
+        break;
+      }
+      default: {
+        // console.log(QuestionFill.answer)
+        customID_answer = QuestionFill.answer.value
+        metadata_answer = QuestionFill.metadata.value
+        comment_answer = QuestionFill.comment
+        break;
+      }
     }
-    case "CheckboxQuestion":
-    case "GridTextQuestion":
-    case "GridIntegerQuestion":
-    default: {
-      customID_answer = QuestionFill.answer.value
-      metadata_answer = QuestionFill.metadata.value
-      comment_answer = QuestionFill.comment
-      break;
-    }
+
   }
 
-  return {
+  return differentQuestion.length != 0 ? { differentQuestion: differentQuestion } : {
     customID_answer: customID_answer || "",
     metadata_answer: metadata_answer || "",
-    comment_answer: comment_answer
+    comment_answer: comment_answer || ""
   }
-
 }
 
 function buildActivityInfo(activity: any,) {
@@ -190,6 +214,7 @@ function buildActivityInfo(activity: any,) {
   let currentStatusDate: string
   let currentStatusName: string
   let activityInterviewerEmail: string = activityInterviews ? activityInterviews.interviewer.email : ''
+  let activityExternalId: string = activity.externalID || ''
   const FINALIZED = 'FINALIZED'
   const INITIALIZED_OFFLINE = 'INITIALIZED_OFFLINE'
   const CREATED = 'CREATED'
@@ -222,7 +247,8 @@ function buildActivityInfo(activity: any,) {
     activityCreationDate: activityCreationDate,
     activityLastFinalizationDate: activityLastFinalizationDate,
     activityPaperRealizationDate: activityPaperRealizationDate,
-    activityPaperEmail: activityPaperEmail
+    activityPaperEmail: activityPaperEmail,
+    activityExternalId
   }
 }
 
