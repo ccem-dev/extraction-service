@@ -1,28 +1,20 @@
-import IResponse, {InternalServerErrorResponse, NotFoundResponse, SuccessResponse} from '../utils/response';
-import {Types} from "mongoose";
-import ObjectId = Types.ObjectId;
-import OtusConnection from '../../config/database/OtusConnection'
+import IResponse, {NotFoundResponse, SuccessResponse} from '../utils/response';
 import PipelineModel from '../model/pipeline/Model';
 import ExtractionModel from '../model/extraction/Model';
-
 
 class PipelineService {
 
   constructor() {
   }
 
-  async perform (name: string): Promise<IResponse> {
+  async perform (pipelineName: string): Promise<IResponse> {
     try {
-      let query = await PipelineModel.findOne({'name': name});
+      console.log('\nextraction from pipeline ' + pipelineName + ' ...');
+      let query = await PipelineModel.findOne({'name': pipelineName});
       let code = new Function("return " + query["function"].code)();
-
       let extraction = await ExtractionModel.aggregate(query.pipeline).allowDiskUse(true);
-      let result = code(extraction);
-
-      console.log('extraction result');
-      console.log(JSON.stringify(result,null, 2));
-
-      return new SuccessResponse(result);
+      console.log('extraction finished\n');
+      return new SuccessResponse(code(extraction));
     }
     catch (e) {
       console.error(e);
@@ -30,20 +22,6 @@ class PipelineService {
     }
   }
 
-  // static async create(activityId: string): Promise<IResponse> {
-
-  //   try {
-
-  //     // await ExtrationModel.insert({
-  //     //   acronym: "TESTE",
-  //     //   activityId: "5634634t643"});
-  //     return new SuccessResponse();
-  //   } catch (e) {
-  //     console.error(e);
-  //     throw new InternalServerErrorResponse(e);
-  //   }
-  // }
-};
+}
 
 export default new PipelineService();
-
