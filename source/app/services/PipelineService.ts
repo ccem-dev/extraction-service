@@ -7,7 +7,7 @@ class PipelineService {
   constructor() {
   }
 
-  async perform (pipelineName: string): Promise<IResponse> {
+  async performAsJson (pipelineName: string): Promise<IResponse> {
     try {
       console.log('\nextraction from pipeline ' + pipelineName + ' ...');
       let query = await PipelineModel.findOne({'name': pipelineName});
