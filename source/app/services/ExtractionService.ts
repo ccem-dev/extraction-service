@@ -1,4 +1,4 @@
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, ConflictResponse } from '../utils/response';
+import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse } from '../utils/response';
 import { Types } from "mongoose";
 import ExtractionModel from "../model/extraction/Model";
 import ActivityModel from "../model/activity/Model";
@@ -11,17 +11,12 @@ class ExtrationService {
     let activity
     let survey
     let activityInfo
-    let existActivity
     let activityFillingList: any[]
 
     try {
-      existActivity = await this.exists(activityId)
+      activity = await this.findActivity(activityId)
 
-      console.log(existActivity)
-      console.log(activityId)
-
-      if (!existActivity) {
-        activity = await this.findActivity(activityId)
+      if (activity) {
         survey = await this.findSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
         activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
         activityInfo = buildActivityInfo(activity)
@@ -33,9 +28,8 @@ class ExtrationService {
         } else {
           return new NotFoundResponse()
         }
-
       } else {
-        return new ConflictResponse();
+        return new NotFoundResponse();
       }
     } catch (e) {
       console.error(e);
@@ -43,19 +37,7 @@ class ExtrationService {
     }
   }
 
-  async exists(activityId: string) {
-    try {
-      let resultExistActivity = await ExtractionModel.exists({ 'activityId': ObjectId(activityId) })
-
-      return resultExistActivity
-    }
-    catch (e) {
-      console.error(e);
-      throw new InternalServerErrorResponse(e);
-    }
-  }
-
-  async findActivity(activityId: string) {
+ async findActivity(activityId: string) {
     let resultActivity
     try {
       resultActivity = await ActivityModel.findOne({
@@ -106,7 +88,8 @@ class ExtrationService {
 
 async function persist(activity: any, activityInfo: any, dictionary: any) {
   try {
-    return await ExtractionModel.create({
+
+    return await ExtractionModel.updateOne({ activityId: activity._id },{
       activityId: ObjectId(activity._id),
       acronym: activity.surveyForm.acronym,
       version: activity.surveyForm.version,
@@ -125,14 +108,12 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
       last_finalization_date: activityInfo.activityLastFinalizationDate,
       external_id: activity.externalID,
       obj: dictionary
-    });
+    },{ upsert: true }).exec();
 
   } catch (e) {
     console.error(e)
     throw new InternalServerErrorResponse(e)
   }
-
-
 }
 
 function dictionaryCustomIdAndFillAnwser(activityFillingList: any, survey: any) {
@@ -169,6 +150,7 @@ function extractionAnwserCustomID(activityFillingList: any, question: any) {
   console.log(QuestionFill)
   switch (QuestionFill.answer.type) {
     case "CalendarQuestion": {
+      console.log(QuestionFill.answer)
       customID_answer = QuestionFill.answer.value.value
       metadata_answer = QuestionFill.metadata.value
       comment_answer = QuestionFill.comment
