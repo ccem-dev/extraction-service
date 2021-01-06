@@ -7,7 +7,7 @@ class Pipeline {
   public name?: string;
 
   @prop()
-  public pipeline: Document[];
+  public pipeline: any;
 
   @prop()
   public function?: {
