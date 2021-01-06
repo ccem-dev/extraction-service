@@ -1,4 +1,4 @@
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse } from '../utils/response';
+import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, ConflictResponse } from '../utils/response';
 import { Types } from "mongoose";
 import ExtractionModel from "../model/extraction/Model";
 import ActivityModel from "../model/activity/Model";
@@ -7,25 +7,46 @@ import ObjectId = Types.ObjectId;
 
 class ExtrationService {
   async create(activityId: string): Promise<IResponse> {
-    let dictionary;
-    let activityInfo;
+    let dictionary
+    let activity
+    let survey
+    let activityInfo
+    let existActivity
+    let activityFillingList: any[]
 
     try {
-      let activity = await this.findActivity(activityId)
+      existActivity = await this.exists(activityId)
 
-      if (activity) {
-        let survey = await this.findSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
-        let activityFillingList: any[] = activity.fillContainer ? activity.fillContainer.fillingList : []
+      if (existActivity) {
+        activity = await this.findActivity(activityId)
+        survey = await this.findSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
+        activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
         activityInfo = buildActivityInfo(activity)
         if (survey && activityFillingList.length != 0) {
           dictionary = dictionaryCustomIdAndFillAnwser(activityFillingList, survey)
+          const extraction = await persist(activity, activityInfo, dictionary);
+
+          return new SuccessResponse(activity);
+        } else {
+          return new NotFoundResponse()
         }
+
+      } else {
+        return new ConflictResponse();
       }
-
-      const extraction = await persist(activity, activityInfo, dictionary);
-
-      return new SuccessResponse(activity);
     } catch (e) {
+      console.error(e);
+      throw new InternalServerErrorResponse(e);
+    }
+  }
+
+  async exists(activityId: string) {
+    try {
+      let resultExistActivity = await ExtractionModel.exists({ 'activityId': new ObjectId(activityId) })
+
+      return resultExistActivity
+    }
+    catch (e) {
       console.error(e);
       throw new InternalServerErrorResponse(e);
     }
@@ -36,13 +57,13 @@ class ExtrationService {
     try {
       resultActivity = await ActivityModel.findOne({
         '_id': new ObjectId(activityId)
-      }).exec();
+      }).exec()
 
-      return resultActivity ? resultActivity.toJSON() : null;
+      return resultActivity ? resultActivity.toJSON() : null
     }
     catch (e) {
-      console.error(e);
-      throw new InternalServerErrorResponse(e);
+      console.error(e)
+      throw new InternalServerErrorResponse(e)
     }
   }
 
@@ -53,11 +74,11 @@ class ExtrationService {
         'surveyTemplate.identity.acronym': acronym, 'version': version
       }).exec();
 
-      return resultSurvey ? resultSurvey.toJSON() : null;
+      return resultSurvey ? resultSurvey.toJSON() : null
     }
     catch (e) {
-      console.error(e);
-      throw new InternalServerErrorResponse(e);
+      console.error(e)
+      throw new InternalServerErrorResponse(e)
     }
   }
 
@@ -86,25 +107,23 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
     acronym: activity.surveyForm.acronym,
     version: activity.surveyForm.version,
     recruitmentNumber: activity.participantData.recruitmentNumber,
-    participant_field_center: activity.participantData.fieldCenter.acronym,
+    participant_field_center: activity.participantData.fieldCenter.acronym,//TODO review center participant
     mode: activity.mode,
-    // type: activity.,
-    category: activity.name,
+    type: '',// TODO review
+    category: activity.category.name,
     participant_field_center_by_activity: activity.participantData.fieldCenter.acronym,//TODO review participant_field_center
-    interviewer: activityInfo.activityInterviews.email,
-    current_status: activityInfo.activityStatusHistory.name,
-    current_status_date: activityInfo.activityStatusHistory.date,
+    interviewer: activityInfo.activityInterviewerEmail,
+    current_status: activityInfo.currentStatusName,
+    current_status_date: activityInfo.currentStatusDate,
     creation_date: activityInfo.activityCreationDate,
-    // paper_realization_date: activityInfo.activityStatusHistory,
-    // paper_interviewer: activityInfo.activityStatusHistory,
-    last_finalization_date: activityInfo.activityLastFinalitionDate,
+    paper_realization_date: activityInfo.activityPaperRealizationDate,
+    paper_interviewer: activityInfo.activityPaperEmail,
+    last_finalization_date: activityInfo.activityLastFinalizationDate,
     external_id: activity.externalID,
     obj: dictionary
   });
-        // await ExtractionModel.save(); // TODO review save method for persist
+ 
 }
-
-
 
 function dictionaryCustomIdAndFillAnwser(activityFillingList: any, survey: any) {
   let surveyItemContainer: any[] = survey.surveyTemplate ? survey.surveyTemplate.itemContainer : []
@@ -130,7 +149,7 @@ function dictionaryCustomIdAndFillAnwser(activityFillingList: any, survey: any) 
   return result
 }
 
-function  extractionAnwserCustomID(activityFillingList: any, question: any) {
+function extractionAnwserCustomID(activityFillingList: any, question: any) {
   let customID_answer: any
   let metadata_answer: any
   let comment_answer: any
@@ -165,36 +184,53 @@ function  extractionAnwserCustomID(activityFillingList: any, question: any) {
 }
 
 function buildActivityInfo(activity: any,) {
-  let activityNavigationTracker: any = activity.navigationTracker
-  let activityNavigationTrackerItems: any = activityNavigationTracker.items != 0 ? activityNavigationTracker.items[activityNavigationTracker.items.length - 1] : {}
+  let activityNavigationTracker: any = activity.navigationTracker // TODO review navigationTracker
+  let activityNavigationTrackerItems: any = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items[activityNavigationTracker.items.length - 1] : {}
+  let activityInterviews: any = activity.interviews.length != 0 ? activity.interviews[activity.interviews.length - 1] : null
   let activityStatusHistory: any = {}
-  let activityInterviews: any = activity.interviews.length != 0 ? activity.interviews[activity.interviews.length - 1] : {}
-  let activityLastFinalition: any
+  let activityLastFinalization: any
   let activityCreation: any
-  let activityLastFinalitionDate: string
+  let activityPaperRealization: any
+  let activityLastFinalizationDate: string
+  let activityPaperRealizationDate: string
+  let activityPaperEmail: string
   let activityCreationDate: string
+  let currentStatusDate: string
+  let currentStatusName: string
+  let activityInterviewerEmail: string = activityInterviews ? activityInterviews.interviewer.email : ''
   const FINALIZED = 'FINALIZED'
+  const INITIALIZED_OFFLINE = 'INITIALIZED_OFFLINE'
   const CREATED = 'CREATED'
 
-  if (activity.statusHistory != 0) {
+  if (activity.statusHistory.length != 0) {
     activityStatusHistory = activity.statusHistory[activity.statusHistory.length - 1]
-    activityLastFinalition = activity.statusHistory.reverse().find((items: any) => items.name == FINALIZED)
+    activityLastFinalization = activity.statusHistory.reverse().find((items: any) => items.name == FINALIZED)
     activityCreation = activity.statusHistory.find((items: any) => items.name == CREATED)
-
-    activityLastFinalitionDate = activityLastFinalition ? activityLastFinalition.date : ''
-    activityCreationDate = activityCreation ? activityCreation.date : ''
+    activityPaperRealization = activity.statusHistory.find((items: any) => items.name == INITIALIZED_OFFLINE)
   }
 
-  console.log(activityNavigationTrackerItems)
-  console.log(activityStatusHistory)
-  console.log(activityInterviews)
+  activityLastFinalizationDate = activityLastFinalization ? activityLastFinalization.date : ''
+  activityCreationDate = activityCreation ? activityCreation.date : ''
+  currentStatusName = activityStatusHistory ? activityStatusHistory.name : ''
+  currentStatusDate = activityStatusHistory ? activityStatusHistory.date : ''
+  activityPaperRealizationDate = activityPaperRealization ? activityPaperRealization.date : ''
+  activityPaperEmail = activityPaperRealization ? activityPaperRealization.user.email : ''
+
+  // console.log(activityNavigationTrackerItems)
+  // console.log(activityStatusHistory)
+  // console.log(activityInterviews)
+  // console.log("Finalization:" + activityLastFinalizationDate)
+  // console.log(activityCreationDate)
+  // console.log("Email" + activityInterviewerEmail)
 
   return {
-    activityNavigationTrackerItens: activityNavigationTrackerItems,
-    activityStatusHistory: activityStatusHistory,
-    activityInterviews: activityInterviews,
+    currentStatusName: currentStatusName,
+    currentStatusDate: currentStatusDate,
+    activityInterviewerEmail: activityInterviewerEmail,
     activityCreationDate: activityCreationDate,
-    activityLastFinalitionDate: activityLastFinalitionDate
+    activityLastFinalizationDate: activityLastFinalizationDate,
+    activityPaperRealizationDate: activityPaperRealizationDate,
+    activityPaperEmail: activityPaperEmail
   }
 }
 

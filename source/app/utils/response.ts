@@ -55,3 +55,14 @@ export class ValidationResponse implements IResponse {
   body: object;
   code: number;
 }
+
+export class ConflictResponse implements IResponse {
+  constructor(body: object = { message: "Conflict Data" }) {
+    this.code = 409;
+    this.body = { data: body };
+    return this;
+  }
+
+  body: object;
+  code: number;
+}
