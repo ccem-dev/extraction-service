@@ -17,7 +17,10 @@ class ExtrationService {
     try {
       existActivity = await this.exists(activityId)
 
-      if (existActivity) {
+      console.log(existActivity)
+      console.log(activityId)
+
+      if (!existActivity) {
         activity = await this.findActivity(activityId)
         survey = await this.findSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
         activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
@@ -42,7 +45,7 @@ class ExtrationService {
 
   async exists(activityId: string) {
     try {
-      let resultExistActivity = await ExtractionModel.exists({ 'activityId': new ObjectId(activityId) })
+      let resultExistActivity = await ExtractionModel.exists({ 'activityId': ObjectId(activityId) })
 
       return resultExistActivity
     }
@@ -56,7 +59,7 @@ class ExtrationService {
     let resultActivity
     try {
       resultActivity = await ActivityModel.findOne({
-        '_id': new ObjectId(activityId)
+        '_id': ObjectId(activityId)
       }).exec()
 
       return resultActivity ? resultActivity.toJSON() : null
@@ -72,7 +75,7 @@ class ExtrationService {
     try {
       resultSurvey = await SurveyModel.findOne({
         'surveyTemplate.identity.acronym': acronym, 'version': version
-      }).exec();
+      }).exec()
 
       return resultSurvey ? resultSurvey.toJSON() : null
     }
@@ -90,39 +93,46 @@ class ExtrationService {
       // = await ExtractionModel.deleteOne({ "_id": new ObjectId(activityId) });
     } catch (e) {
       console.error(e);
-      throw new InternalServerErrorResponse(e);
+      throw new InternalServerErrorResponse(e)
     }
 
     if (!deleteResult) {
       throw new NotFoundResponse({ message: "Extration not found" })
     }
 
-    return new SuccessResponse();
+    return new SuccessResponse()
   }
 };
 
 async function persist(activity: any, activityInfo: any, dictionary: any) {
-  return await ExtractionModel.create({
-    activityId: ObjectId(activity._Id),
-    acronym: activity.surveyForm.acronym,
-    version: activity.surveyForm.version,
-    recruitmentNumber: activity.participantData.recruitmentNumber,
-    participant_field_center: activity.participantData.fieldCenter.acronym,//TODO review center participant
-    mode: activity.mode,
-    type: '',// TODO review
-    category: activity.category.name,
-    participant_field_center_by_activity: activity.participantData.fieldCenter.acronym,//TODO review participant_field_center
-    interviewer: activityInfo.activityInterviewerEmail,
-    current_status: activityInfo.currentStatusName,
-    current_status_date: activityInfo.currentStatusDate,
-    creation_date: activityInfo.activityCreationDate,
-    paper_realization_date: activityInfo.activityPaperRealizationDate,
-    paper_interviewer: activityInfo.activityPaperEmail,
-    last_finalization_date: activityInfo.activityLastFinalizationDate,
-    external_id: activity.externalID,
-    obj: dictionary
-  });
- 
+  try {
+    return await ExtractionModel.create({
+      activityId: ObjectId(activity._id),
+      acronym: activity.surveyForm.acronym,
+      version: activity.surveyForm.version,
+      recruitmentNumber: activity.participantData.recruitmentNumber,
+      participant_field_center: activity.participantData.fieldCenter.acronym,//TODO review center participant
+      mode: activity.mode,
+      type: '',// TODO review
+      category: activity.category.name,
+      participant_field_center_by_activity: activity.participantData.fieldCenter.acronym,//TODO review participant_field_center
+      interviewer: activityInfo.activityInterviewerEmail,
+      current_status: activityInfo.currentStatusName,
+      current_status_date: activityInfo.currentStatusDate,
+      creation_date: activityInfo.activityCreationDate,
+      paper_realization_date: activityInfo.activityPaperRealizationDate,
+      paper_interviewer: activityInfo.activityPaperEmail,
+      last_finalization_date: activityInfo.activityLastFinalizationDate,
+      external_id: activity.externalID,
+      obj: dictionary
+    });
+
+  } catch (e) {
+    console.error(e)
+    throw new InternalServerErrorResponse(e)
+  }
+
+
 }
 
 function dictionaryCustomIdAndFillAnwser(activityFillingList: any, survey: any) {
