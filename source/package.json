@@ -25,6 +25,7 @@
     "express": "4.17.1",
     "express-list-endpoints": "4.0.1",
     "express-session": "1.17.1",
+    "json-2-csv": "^3.10.2",
     "mongoose": "5.9.14",
     "mongoose-schema-extend": "0.2.2",
     "nodemon": "2.0.4",
