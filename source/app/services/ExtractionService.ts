@@ -4,6 +4,8 @@ import ExtractionModel from "../model/extraction/Model";
 import ActivityModel from "../model/activity/Model";
 import SurveyModel from "../model/survey/Model";
 import ObjectId = Types.ObjectId;
+import ActivityEnum from "../enum/activityEnum"
+import MetadataValueEnum from "../enum/metadataValueEnum"
 
 class ExtrationService {
   async create(activityId: string): Promise<IResponse> {
@@ -11,17 +13,22 @@ class ExtrationService {
     let activity
     let survey
     let activityInfo
+    let activityNavigationTracker: any
     let activityFillingList: any[]
+    let activityNavigationTrackerItems: any[]
 
     try {
-      activity = await this.findActivity(activityId)
+      activity = await this.getActivity(activityId)
 
       if (activity) {
-        survey = await this.findSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
+        survey = await this.getSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
         activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
+        activityNavigationTracker = activity.navigationTracker
+        activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
+
         activityInfo = buildActivityInfo(activity)
         if (survey && activityFillingList.length != 0) {
-          dictionary = dictionaryCustomIdAndFillAnswer(activityFillingList, survey)
+          dictionary = dictionaryCustomIdAndFillAnswer(activityFillingList, activityNavigationTrackerItems, survey)
           const extraction = await persist(activity, activityInfo, dictionary);
 
           return new SuccessResponse(survey);
@@ -37,7 +44,7 @@ class ExtrationService {
     }
   }
 
-  async findActivity(activityId: string) {
+  async getActivity(activityId: string) {
     let resultActivity
     try {
       resultActivity = await ActivityModel.findOne({
@@ -52,7 +59,7 @@ class ExtrationService {
     }
   }
 
-  async findSurvey(acronym: string, version: number) {
+  async getSurvey(acronym: string, version: number) {
     let resultSurvey
     try {
       resultSurvey = await SurveyModel.findOne({
@@ -115,141 +122,158 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
   }
 }
 
-function dictionaryCustomIdAndFillAnswer(activityFillingList: any, survey: any) {
+function dictionaryCustomIdAndFillAnswer(activityFillingList: any, activityNavigationTrackerItems: any, survey: any) {
   let surveyItemContainer: any[] = survey.surveyTemplate ? survey.surveyTemplate.itemContainer : []
   let answerAllQuestion: any
-  let result: any[] = []
+  let result: any = {}
 
-    surveyItemContainer.forEach((question: any) => {
-      answerAllQuestion = extractionAnswerCustomID(activityFillingList, question)
-      if (answerAllQuestion) {
-        if (answerAllQuestion.differentQuestion) {
-          // console.log(answerAllQuestion.differentQuestion)
-          answerAllQuestion.differentQuestion.forEach((items: any) => {
-            result.push(items)
-          })
-        } else {
-          result.push({
-            [question.customID]: answerAllQuestion.customID_answer,
-            [question.customID + '_metadata']: answerAllQuestion.metadata_answer,
-            [question.customID + '_comment']: answerAllQuestion.comment_answer
-          })
-        }
-      }
-    })
+  surveyItemContainer.forEach((question: any) => {
+    answerAllQuestion = extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
+    if (answerAllQuestion.length != 0) {
+      answerAllQuestion.forEach((items: any) => {
+        Object.assign(result, items);
+      })
+    }
+  })
 
   console.log(result)
-
-  // console.log(answerAllQuestion)
-  // console.log(surveyItemContainer)
-  // console.log(result)
   return result
 }
 
-function extractionAnswerCustomID(activityFillingList: any, question: any) {
-  let customID_answer: string
-  let metadata_answer: string
-  let comment_answer: string
+function metadataOptions(value: string): string {
+  let metadataValue: string
+  switch (value) {
+    case '1': {
+      metadataValue = MetadataValueEnum.ONE
+      break;
+    }
+    case '2': {
+      metadataValue = MetadataValueEnum.TWO
+      break;
+    }
+    case '3': {
+      metadataValue = MetadataValueEnum.THREE
+      break;
+    }
+    case '4': {
+      metadataValue = MetadataValueEnum.FOUR
+      break;
+    }
+    default: {
+      metadataValue = ''
+      break;
+    }
+  }
+
+  return metadataValue
+}
+
+function extractionAnswerCustomID(activityFillingList: any, activityNavigationTrackerItems: any, question: any): any {
+  let questionAnswer: any[] = []
   let QuestionFill: any
-  let differentQuestion: any[] = []
+
+  const skipp = skippAnswer(activityNavigationTrackerItems, question.templateID)
 
   QuestionFill = activityFillingList.find((activity: any) => activity.questionID === question.templateID)
 
   if (QuestionFill) {
+    const metadata = metadataOptions(QuestionFill.metadata.value)
+
     switch (QuestionFill.answer.type) {
-      case "CalendarQuestion": {
-        customID_answer = QuestionFill.answer.value ? QuestionFill.answer.value.value : ''
-        metadata_answer = QuestionFill.metadata.value
-        comment_answer = QuestionFill.comment
+      case ActivityEnum.CALENDAR_QUESTION: {
+        questionAnswer.push({ [question.customID]: QuestionFill.answer.value ? QuestionFill.answer.value.value : '' })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+
         break;
       }
-      case "CheckboxQuestion": {
-        differentQuestion = QuestionFill.answer.value.map((items: any) => {
+      case ActivityEnum.CHECKBOX_QUESTION: {
+        questionAnswer = QuestionFill.answer.value.map((items: any) => {
           return {
             [items.option]: items.state ? 1 : 0
           }
         })
-        differentQuestion.push({ [question.customID + '_metadata']: QuestionFill.metadata_answer || '' })
-        differentQuestion.push({ [question.customID + '_comment']: QuestionFill.comment_answer || '' })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+
         break;
       }
-      case "GridTextQuestion": {
+      case ActivityEnum.GRID_TEXT_QUESTION: {
         // console.log(QuestionFill.answer)
         break;
       }
-      case "GridIntegerQuestion": {
+      case ActivityEnum.GRID_INTEGER_QUESTION: {
         // console.log(QuestionFill.answer)
         break;
       }
       default: {
-        // console.log(QuestionFill.answer)
-        customID_answer = QuestionFill.answer.value
-        metadata_answer = QuestionFill.metadata.value
-        comment_answer = QuestionFill.comment
+        questionAnswer.push({ [question.customID]: QuestionFill.answer.value ? QuestionFill.answer.value : '' })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+
         break;
       }
     }
-
   }
 
-  return differentQuestion.length != 0 ? { differentQuestion: differentQuestion } : {
-    customID_answer: customID_answer || "",
-    metadata_answer: metadata_answer || "",
-    comment_answer: comment_answer || ""
+  if (skipp) {
+    questionAnswer.push({ [question.customID]: '' })
+    questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: skipp })
+    questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
   }
+
+  return questionAnswer
 }
 
-function buildActivityInfo(activity: any,) {
-  let activityNavigationTracker: any = activity.navigationTracker // TODO review navigationTracker
-  let activityNavigationTrackerItems: any = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items[activityNavigationTracker.items.length - 1] : {}
+function skippAnswer(activityNavigationTrackerItems: any,questionID: string): string {
+  let NavigationItems: any
+
+  // console.log(activityNavigationTrackerItems)
+  console.log(questionID)
+
+  NavigationItems = activityNavigationTrackerItems.find((items: any) => items.id == questionID)
+
+  console.log(NavigationItems)
+  return NavigationItems.state == ActivityEnum.SKIPPED ? MetadataValueEnum.SKIPPED_ANSWER : null
+}
+
+function buildActivityInfo(activity: any) {
+  type ActivityInfo = {
+    activityLastFinalizationDate: string,
+    activityPaperRealizationDate: string,
+    activityPaperEmail: string,
+    activityCreationDate: string,
+    currentStatusDate: string,
+    currentStatusName: string,
+    activityInterviewerEmail: string,
+    activityExternalId: string
+  }
+
   let activityInterviews: any = activity.interviews.length != 0 ? activity.interviews[activity.interviews.length - 1] : null
   let activityStatusHistory: any = {}
   let activityLastFinalization: any
   let activityCreation: any
   let activityPaperRealization: any
-  let activityLastFinalizationDate: string
-  let activityPaperRealizationDate: string
-  let activityPaperEmail: string
-  let activityCreationDate: string
-  let currentStatusDate: string
-  let currentStatusName: string
-  let activityInterviewerEmail: string = activityInterviews ? activityInterviews.interviewer.email : ''
-  let activityExternalId: string = activity.externalID || ''
-  const FINALIZED = 'FINALIZED'
-  const INITIALIZED_OFFLINE = 'INITIALIZED_OFFLINE'
-  const CREATED = 'CREATED'
 
   if (activity.statusHistory.length != 0) {
     activityStatusHistory = activity.statusHistory[activity.statusHistory.length - 1]
-    activityLastFinalization = activity.statusHistory.reverse().find((items: any) => items.name == FINALIZED)
-    activityCreation = activity.statusHistory.find((items: any) => items.name == CREATED)
-    activityPaperRealization = activity.statusHistory.find((items: any) => items.name == INITIALIZED_OFFLINE)
+    activityLastFinalization = activity.statusHistory.reverse().find((items: any) => items.name == ActivityEnum.FINALIZED)
+    activityCreation = activity.statusHistory.find((items: any) => items.name == ActivityEnum.CREATED)
+    activityPaperRealization = activity.statusHistory.find((items: any) => items.name == ActivityEnum.INITIALIZED_OFFLINE)
   }
 
-  activityLastFinalizationDate = activityLastFinalization ? activityLastFinalization.date : ''
-  activityCreationDate = activityCreation ? activityCreation.date : ''
-  currentStatusName = activityStatusHistory ? activityStatusHistory.name : ''
-  currentStatusDate = activityStatusHistory ? activityStatusHistory.date : ''
-  activityPaperRealizationDate = activityPaperRealization ? activityPaperRealization.date : ''
-  activityPaperEmail = activityPaperRealization ? activityPaperRealization.user.email : ''
-
-  // console.log(activityNavigationTrackerItems)
-  // console.log(activityStatusHistory)
-  // console.log(activityInterviews)
-  // console.log("Finalization:" + activityLastFinalizationDate)
-  // console.log(activityCreationDate)
-  // console.log("Email" + activityInterviewerEmail)
-
-  return {
-    currentStatusName: currentStatusName,
-    currentStatusDate: currentStatusDate,
-    activityInterviewerEmail: activityInterviewerEmail,
-    activityCreationDate: activityCreationDate,
-    activityLastFinalizationDate: activityLastFinalizationDate,
-    activityPaperRealizationDate: activityPaperRealizationDate,
-    activityPaperEmail: activityPaperEmail,
-    activityExternalId
+  let buildActivityInfo: ActivityInfo = {
+    activityLastFinalizationDate: activityLastFinalization ? activityLastFinalization.date : '',
+    activityCreationDate: activityCreation ? activityCreation.date : '',
+    currentStatusName: activityStatusHistory ? activityStatusHistory.name : '',
+    currentStatusDate: activityStatusHistory ? activityStatusHistory.date : '',
+    activityPaperRealizationDate: activityPaperRealization ? activityPaperRealization.date : '',
+    activityPaperEmail: activityPaperRealization ? activityPaperRealization.user.email : '',
+    activityInterviewerEmail: activityInterviews ? activityInterviews.interviewer.email : '',
+    activityExternalId: activity.externalID ? activity.externalID : ''
   }
+
+  return buildActivityInfo
 }
 
 export default new ExtrationService()

@@ -3,7 +3,7 @@ import { Types } from "mongoose";
 import ObjectId = Types.ObjectId;
 
 interface Dic {
-  [key: string]: Object[]
+  [key: string]: any[]
 }
 
 class Extraction {
@@ -42,27 +42,24 @@ class Extraction {
 
   @prop({ required: true })
   public current_status_date?: string
-  // "2018-07-11T14:26:26.775",
 
   @prop({ required: true })
   public creation_date?: string
-  // "2017-11-24T14:33:28.837",
 
   @prop()
   public paper_realization_date?: string
-  // "2017-04-05T14:31:50.259",
 
   @prop()
   public paper_interviewer?: string
 
   @prop()
   public last_finalization_date?: string
-  // "2018-07-11T14:26:26.775",
+
   @prop()
   public external_id?: string
 
   @prop({ required: true })
-  public obj: Dic = {};
+  public obj: Dic = {}
 }
 
 export default Extraction;
