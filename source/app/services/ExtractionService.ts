@@ -104,7 +104,7 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
       mode: activity.mode,
       type: '',// TODO review
       category: activity.category.name,
-      participant_field_center_by_activity: activity.participantData.fieldCenter.acronym,//TODO review participant_field_center
+      participant_field_center_by_activity: activity.participantData.fieldCenter.acronym,
       interviewer: activityInfo.activityInterviewerEmail,
       current_status: activityInfo.currentStatusName,
       current_status_date: activityInfo.currentStatusDate,
@@ -190,7 +190,7 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
       case ActivityEnum.CHECKBOX_QUESTION: {
         questionAnswer = QuestionFill.answer.value.map((items: any) => {
           return {
-            [items.option]: items.state ? 1 : 0
+            [items.option]: items.state ? '1' : '0'
           }
         })
         questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
