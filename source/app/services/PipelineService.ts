@@ -14,7 +14,6 @@ class PipelineService {
       return new SuccessResponse(result);
     }
     catch (e) {
-      console.error(e);
       return new NotFoundResponse(e);
     }
   }
@@ -28,7 +27,6 @@ class PipelineService {
       return new SuccessResponse(csvContent);
     }
     catch (e) {
-      console.error(e);
       return new NotFoundResponse(e);
     }
   }
