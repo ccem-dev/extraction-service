@@ -217,7 +217,15 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
   }
 
   if (skipp) {
-    questionAnswer.push({ [question.customID]: '' })
+    if (question.options && question.objectType == ActivityEnum.CHECKBOX_QUESTION) {
+      question.options.forEach((option: any) => {
+        if (option.customOptionID) {
+          questionAnswer.push({ [option.customOptionID]: '' })
+        }
+      })
+    } else {
+      questionAnswer.push({ [question.customID]: '' })
+    }
     questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: skipp })
     questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
   }
@@ -225,7 +233,7 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
   return questionAnswer
 }
 
-function skippAnswer(activityNavigationTrackerItems: any,questionID: string): string {
+function skippAnswer(activityNavigationTrackerItems: any, questionID: string): string {
   let NavigationItems: any
 
   // console.log(activityNavigationTrackerItems)
