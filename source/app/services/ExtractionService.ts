@@ -26,7 +26,7 @@ class ExtrationService {
         activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
 
         activityInfo = buildActivityInfo(activity)
-        if (survey && activityFillingList.length != 0 && !activity.isDisabled) {
+        if (survey && activityFillingList.length != 0) {
           dictionary = dictionaryCustomIdAndFillAnswer(activityFillingList, activityNavigationTrackerItems, survey)
           const extraction = await persist(activity, activityInfo, dictionary);
 
@@ -47,7 +47,7 @@ class ExtrationService {
     let resultActivity
     try {
       resultActivity = await ActivityModel.findOne({
-        '_id': ObjectId(activityId)
+        '_id': ObjectId(activityId), 'isDiscarded': false
       }).exec()
 
       return resultActivity ? resultActivity.toJSON() : null
