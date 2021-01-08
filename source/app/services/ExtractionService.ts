@@ -304,6 +304,9 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
     case ActivityEnum.TEXT_ITEM: {
       break;
     }
+    case ActivityEnum.IMAGE_ITEM: {
+      break;
+    }
     default: {
       questionSkipp.push({ [question.customID]: '' })
       questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })

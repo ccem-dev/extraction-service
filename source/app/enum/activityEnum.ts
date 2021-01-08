@@ -9,6 +9,7 @@ enum ActivityEnum {
   GRID_TEXT_QUESTION = 'GridTextQuestion',
   GRID_INTEGER_QUESTION = 'GridIntegerQuestion',
   TEXT_ITEM = 'TextItem',
+  IMAGE_ITEM = 'ImageItem',
   SKIPPED = 'SKIPPED'
 }
 
