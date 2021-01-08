@@ -20,7 +20,7 @@ class ExtrationService {
       if (!ObjectId.isValid(activityId)) {
         return new NotAcceptableResponse();
       }
-      
+
       activity = await this.getActivity(activityId)
 
       if (activity) {
@@ -50,11 +50,11 @@ class ExtrationService {
   async getActivity(activityId: string) {
     let resultActivity
 
-    if (!ObjectId.isValid(activityId)) {
-      return new NotAcceptableResponse();
-    }
-
     try {
+      if (!ObjectId.isValid(activityId)) {
+        return new NotAcceptableResponse();
+      }
+      
       resultActivity = await ActivityModel.findOne({
         '_id': ObjectId(activityId), 'isDiscarded': false
       }).exec()
@@ -82,14 +82,12 @@ class ExtrationService {
   }
 
   async remove(activityId: string): Promise<IResponse> {
-    let deleteResult
-
-    if (!ObjectId.isValid(activityId)) {
-      return new NotAcceptableResponse();
-    }
-
     try {
-      deleteResult = await ExtractionModel.deleteOne({ "activityId": new ObjectId(activityId) });
+      if (!ObjectId.isValid(activityId)) {
+        return new NotAcceptableResponse();
+      }
+
+      let deleteResult = await ExtractionModel.deleteOne({ "activityId": new ObjectId(activityId) });
     } catch (e) {
       throw new InternalServerErrorResponse(e)
     }
@@ -202,7 +200,7 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
         let fileName: string = ''
         if (QuestionFill.answer.value) {
           QuestionFill.answer.value.forEach((items: any, index: number) => {
-            if (QuestionFill.answer.value.length-1 == index) {
+            if (QuestionFill.answer.value.length - 1 == index) {
               fileName = fileName.concat(items.name)
             } else {
               fileName = fileName.concat(items.name + ',')
