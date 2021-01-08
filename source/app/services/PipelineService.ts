@@ -1,7 +1,7 @@
 import IResponse, {NotFoundResponse, SuccessResponse} from '../utils/response';
 import PipelineModel from '../model/pipeline/Model';
 import ExtractionModel from '../model/extraction/Model';
-import { json2csvAsync } from 'json-2-csv';
+import CsvService from "./CsvService";
 
 class PipelineService {
 
@@ -21,13 +21,7 @@ class PipelineService {
   async performAsCsv (pipelineName: string): Promise<IResponse> {
     try {
       let result = await findPipelineAndApplyFunction(pipelineName);
-      let csvContent = await json2csvAsync(result, {
-        delimiter: {
-          field: ";"
-        },
-        unwindArrays: true
-      });
-      return new SuccessResponse(csvContent);
+      return new SuccessResponse(await CsvService.createCsv(result));
     }
     catch (e) {
       return new NotFoundResponse(e);
