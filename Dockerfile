@@ -8,4 +8,4 @@ ENV DATABASE_USER otus
 ENV DATABASE_PASS otus
 ENV DATABASE otus
 ENV NODE_OPTIONS --max_old_space_size=1024
-CMD node --max-old-space-size=$MEMORY --optimize-for-size --inspect server.js
+CMD node --max-old-space-size=$MEMORY --optimize-for-size --inspect config/init/server.js
