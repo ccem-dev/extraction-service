@@ -203,7 +203,6 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
             }
           })
         }
-
         questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, fileName, metadata, QuestionFill.comment))
         break;
       }
@@ -213,44 +212,45 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
         break;
       }
       case ActivityEnum.CALENDAR_QUESTION: {
-        questionAnswer = attributeQuestion(question.customID, QuestionFill.answer.value.value, metadata, QuestionFill.comment)
-
+        const value = QuestionFill.answer.value ? QuestionFill.answer.value.value : null
+        questionAnswer = attributeQuestion(question.customID, value, metadata, QuestionFill.comment)
         break;
       }
       case ActivityEnum.CHECKBOX_QUESTION: {
-        questionAnswer = QuestionFill.answer.value.map((items: any) => {
-          return {
-            [items.option]: items.state ? '1' : '0'
-          }
-        })
-
+        if (QuestionFill.answer.value) {
+          questionAnswer = QuestionFill.answer.value.map((items: any) => {
+            return {
+              [items.option]: items.state ? '1' : '0'
+            }
+          })
+        }
         questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, null, metadata, QuestionFill.comment))
-
         break;
       }
       case ActivityEnum.GRID_TEXT_QUESTION: {
-        console.log(QuestionFill.answer)
-        QuestionFill.answer.value.forEach((item: any) => {
-          questionAnswer = item.map((items: any) => {
-            return {
-              [items.gridText]: items.value ? items.value : ''
-            }
+        if (QuestionFill.answer.value) {
+          QuestionFill.answer.value.forEach((item: any) => {
+            questionAnswer = item.map((items: any) => {
+              return {
+                [items.gridText]: items.value ? items.value : ''
+              }
+            })
           })
-        })
-
+        }
         questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, null, metadata, QuestionFill.comment))
-
         break;
       }
       case ActivityEnum.GRID_INTEGER_QUESTION: {
         console.log(QuestionFill.answer)
-        QuestionFill.answer.value.forEach((item: any) => {
-          questionAnswer = item.map((items: any) => {
-            return {
-              [items.customID]: items.value ? items.value.toString() : ''
-            }
+        if (QuestionFill.answer.value) {
+          QuestionFill.answer.value.forEach((item: any) => {
+            questionAnswer = item.map((items: any) => {
+              return {
+                [items.customID]: items.value ? items.value.toString() : ''
+              }
+            })
           })
-        })
+        }
         questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, null, metadata, QuestionFill.comment))
         break;
       }
@@ -287,8 +287,8 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
               }
             }
           })
-          questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         }
+        questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         break;
       }
       case ActivityEnum.GRID_TEXT_QUESTION: {
@@ -302,8 +302,8 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
               }
             })
           })
-          questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         }
+        questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         break;
       }
       case ActivityEnum.GRID_INTEGER_QUESTION: {
@@ -317,8 +317,8 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
               }
             })
           })
-          questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         }
+        questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         break;
       }
       case ActivityEnum.TEXT_ITEM: {
