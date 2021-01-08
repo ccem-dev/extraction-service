@@ -22,6 +22,9 @@ class PipelineService {
     try {
       let result = await findPipelineAndApplyFunction(pipelineName);
       let csvContent = await json2csvAsync(result, {
+        delimiter: {
+          field: ";"
+        },
         unwindArrays: true
       });
       return new SuccessResponse(csvContent);
@@ -40,13 +43,14 @@ async function findPipelineAndApplyFunction(pipelineName: string) {
   let code = new Function("return " + query["function"].code)();
   let extraction = await ExtractionModel.aggregate(query.pipeline).allowDiskUse(true);
 
-  console.log('extraction finished\n');
+  console.log('extraction finished!\nprocessing data ...');
 
-  let result = code(extraction);
-  if(Array.isArray(result)){
-    result = result.filter((obj: any) => obj && Object.keys(obj).length > 0);
+  let results = code(extraction);
+  if(Array.isArray(results)){
+    results = results.filter((obj: any) => obj && Object.keys(obj).length > 0);
   }
-  return result;
+  console.log("done");
+  return results;
 }
 
 export default new PipelineService();
