@@ -10,7 +10,8 @@ enum ActivityEnum {
   GRID_INTEGER_QUESTION = 'GridIntegerQuestion',
   TEXT_ITEM = 'TextItem',
   IMAGE_ITEM = 'ImageItem',
-  SKIPPED = 'SKIPPED'
+  SKIPPED = 'SKIPPED',
+  SKIPPED_ANSWER = ".P"
 }
 
 export default ActivityEnum

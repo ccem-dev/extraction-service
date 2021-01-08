@@ -5,7 +5,6 @@ import ActivityModel from "../model/activity/Model";
 import SurveyModel from "../model/survey/Model";
 import ObjectId = Types.ObjectId;
 import ActivityEnum from "../enum/activityEnum"
-import MetadataValueEnum from "../enum/metadataValueEnum"
 
 class ExtrationService {
   async create(activityId: string): Promise<IResponse> {
@@ -140,29 +139,15 @@ function dictionaryCustomIdAndFillAnswer(activityFillingList: any, activityNavig
   return result
 }
 
-function metadataOptions(value: string): string {
-  let metadataValue: string
-  switch (value) {
-    case '1': {
-      metadataValue = MetadataValueEnum.ONE
-      break;
-    }
-    case '2': {
-      metadataValue = MetadataValueEnum.TWO
-      break;
-    }
-    case '3': {
-      metadataValue = MetadataValueEnum.THREE
-      break;
-    }
-    case '4': {
-      metadataValue = MetadataValueEnum.FOUR
-      break;
-    }
-    default: {
-      metadataValue = ''
-      break;
-    }
+function metadataOptions(value: string, question: any): string {
+  let metadataValue: string = ""
+
+  if (question.metadata) {
+    question.metadata.options.forEach((option: any) => {
+      if (option.value.toString() == value) {
+        metadataValue = option.extractionValue
+      }
+    })
   }
 
   return metadataValue
@@ -179,7 +164,7 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
   QuestionFill = activityFillingList.find((activity: any) => activity.questionID === question.templateID)
 
   if (QuestionFill) {
-    const metadata = metadataOptions(QuestionFill.metadata.value)
+    const metadata = metadataOptions(QuestionFill.metadata.value, question)
 
     switch (QuestionFill.answer.type) {
       case ActivityEnum.CALENDAR_QUESTION: {
@@ -264,7 +249,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
             }
           }
         })
-        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
         questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
       }
       break;
@@ -280,7 +265,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
             }
           })
         })
-        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
         questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
       }
       break;
@@ -296,7 +281,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
             }
           })
         })
-        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
         questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
       }
       break;
@@ -309,7 +294,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
     }
     default: {
       questionSkipp.push({ [question.customID]: '' })
-      questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+      questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
       questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
 
       break;
