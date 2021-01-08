@@ -1,4 +1,4 @@
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse } from '../utils/response';
+import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response';
 import { Types } from "mongoose";
 import ExtractionModel from "../model/extraction/Model";
 import ActivityModel from "../model/activity/Model";
@@ -17,6 +17,10 @@ class ExtrationService {
     let activityNavigationTrackerItems: any[]
 
     try {
+      if (!ObjectId.isValid(activityId)) {
+        return new NotAcceptableResponse();
+      }
+      
       activity = await this.getActivity(activityId)
 
       if (activity) {
@@ -45,6 +49,11 @@ class ExtrationService {
 
   async getActivity(activityId: string) {
     let resultActivity
+
+    if (!ObjectId.isValid(activityId)) {
+      return new NotAcceptableResponse();
+    }
+
     try {
       resultActivity = await ActivityModel.findOne({
         '_id': ObjectId(activityId), 'isDiscarded': false
@@ -68,7 +77,6 @@ class ExtrationService {
       return resultSurvey ? resultSurvey.toJSON() : null
     }
     catch (e) {
-      console.error(e)
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -76,16 +84,14 @@ class ExtrationService {
   async remove(activityId: string): Promise<IResponse> {
     let deleteResult
 
-    try {
-      deleteResult
-      // = await ExtractionModel.deleteOne({ "_id": new ObjectId(activityId) });
-    } catch (e) {
-      console.error(e);
-      throw new InternalServerErrorResponse(e)
+    if (!ObjectId.isValid(activityId)) {
+      return new NotAcceptableResponse();
     }
 
-    if (!deleteResult) {
-      throw new NotFoundResponse({ message: "Extration not found" })
+    try {
+      deleteResult = await ExtractionModel.deleteOne({ "activityId": new ObjectId(activityId) });
+    } catch (e) {
+      throw new InternalServerErrorResponse(e)
     }
 
     return new SuccessResponse()
