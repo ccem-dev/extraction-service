@@ -4,6 +4,7 @@ enum ActivityEnum {
   CREATED = 'CREATED',
   QUESTION_METADATA = '_metadata',
   QUESTION_COMMENT = '_comment',
+  SINGLE_SELECTION_QUESTION = 'SingleSelectionQuestion',
   CALENDAR_QUESTION = 'CalendarQuestion',
   CHECKBOX_QUESTION = 'CheckboxQuestion',
   GRID_TEXT_QUESTION = 'GridTextQuestion',
