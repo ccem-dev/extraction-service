@@ -26,7 +26,7 @@ class ExtrationService {
         activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
 
         activityInfo = buildActivityInfo(activity)
-        if (survey && activityFillingList.length != 0) {
+        if (survey && activityFillingList.length != 0 && !activity.isDisabled) {
           dictionary = dictionaryCustomIdAndFillAnswer(activityFillingList, activityNavigationTrackerItems, survey)
           const extraction = await persist(activity, activityInfo, dictionary);
 
