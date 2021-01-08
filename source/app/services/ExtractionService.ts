@@ -172,7 +172,9 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
   let questionAnswer: any[] = []
   let QuestionFill: any
 
-  const skipp = skippAnswer(activityNavigationTrackerItems, question.templateID)
+  console.log(question.customID)
+
+  const skipp = skippAnswer(activityNavigationTrackerItems, question)
 
   QuestionFill = activityFillingList.find((activity: any) => activity.questionID === question.templateID)
 
@@ -199,15 +201,35 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
         break;
       }
       case ActivityEnum.GRID_TEXT_QUESTION: {
-        // console.log(QuestionFill.answer)
+        console.log(QuestionFill.answer)
+        QuestionFill.answer.value.forEach((item: any) => {
+          questionAnswer = item.map((items: any) => {
+            return {
+              [items.gridText]: items.value ? items.value : ''
+            }
+          })
+        })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+
         break;
       }
       case ActivityEnum.GRID_INTEGER_QUESTION: {
-        // console.log(QuestionFill.answer)
+        console.log(QuestionFill.answer)
+        QuestionFill.answer.value.forEach((item: any) => {
+          questionAnswer = item.map((items: any) => {
+            return {
+              [items.customID]: items.value ? items.value.toString() : ''
+            }
+          })
+        })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
+        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+
         break;
       }
       default: {
-        questionAnswer.push({ [question.customID]: QuestionFill.answer.value ? QuestionFill.answer.value : '' })
+        questionAnswer.push({ [question.customID]: QuestionFill.answer.value ? QuestionFill.answer.value.toString() : '' })
         questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
         questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
 
@@ -217,32 +239,83 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
   }
 
   if (skipp) {
-    if (question.options && question.objectType == ActivityEnum.CHECKBOX_QUESTION) {
-      question.options.forEach((option: any) => {
-        if (option.customOptionID) {
-          questionAnswer.push({ [option.customOptionID]: '' })
-        }
-      })
-    } else {
-      questionAnswer.push({ [question.customID]: '' })
-    }
-    questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: skipp })
-    questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+    questionAnswer = skipp
   }
 
   return questionAnswer
 }
 
-function skippAnswer(activityNavigationTrackerItems: any, questionID: string): string {
+function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
   let NavigationItems: any
+  let questionSkipp: any[] = []
 
   // console.log(activityNavigationTrackerItems)
-  console.log(questionID)
+  console.log(question.templateID)
 
-  NavigationItems = activityNavigationTrackerItems.find((items: any) => items.id == questionID)
+  NavigationItems = activityNavigationTrackerItems.find((items: any) => items.id == question.templateID)
 
-  console.log(NavigationItems)
-  return NavigationItems.state == ActivityEnum.SKIPPED ? MetadataValueEnum.SKIPPED_ANSWER : null
+  switch (question.objectType) {
+    case ActivityEnum.CHECKBOX_QUESTION: {
+      if (question.options) {
+        questionSkipp = question.options.map((option: any) => {
+          if (option.customOptionID) {
+            return {
+              [option.customOptionID]: ''
+            }
+          }
+        })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+      }
+      break;
+    }
+    case ActivityEnum.GRID_TEXT_QUESTION: {
+      if (question.lines) {
+        question.lines.forEach((line: any) => {
+          questionSkipp = line.gridTextList.map((items: any) => {
+            if (items) {
+              return {
+                [items.customID]: ''
+              }
+            }
+          })
+        })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+      }
+      break;
+    }
+    case ActivityEnum.GRID_INTEGER_QUESTION: {
+      if (question.lines) {
+        question.lines.forEach((line: any) => {
+          questionSkipp = line.gridIntegerList.map((items: any) => {
+            if (items) {
+              return {
+                [items.customID]: ''
+              }
+            }
+          })
+        })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+      }
+      break;
+    }
+    case ActivityEnum.TEXT_ITEM: {
+      break;
+    }
+    default: {
+      questionSkipp.push({ [question.customID]: '' })
+      questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: MetadataValueEnum.SKIPPED_ANSWER })
+      questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+
+      break;
+    }
+  }
+
+  console.log(NavigationItems.state)
+
+  return NavigationItems.state == ActivityEnum.SKIPPED ? questionSkipp : null
 }
 
 function buildActivityInfo(activity: any) {
