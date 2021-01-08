@@ -9,6 +9,7 @@ enum ActivityEnum {
   CHECKBOX_QUESTION = 'CheckboxQuestion',
   GRID_TEXT_QUESTION = 'GridTextQuestion',
   GRID_INTEGER_QUESTION = 'GridIntegerQuestion',
+  FILE_UPLOAD_QUESTION = 'FileUploadQuestion',
   TEXT_ITEM = 'TextItem',
   IMAGE_ITEM = 'ImageItem',
   SKIPPED = 'SKIPPED',

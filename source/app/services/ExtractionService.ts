@@ -167,6 +167,17 @@ function getSingleSelectionExtractionValue(answer: any, question: any) {
   return singleSelectioExtractionValue
 }
 
+function attributeQuestion(customID: string, answerValue: any, metadataValue: string, commentValue: string): any[] {
+  let answerData: any[] = []
+  if (answerValue) {
+    answerData.push({ [customID]: answerValue ? answerValue.toString() : '' })
+  }
+  answerData.push({ [customID + ActivityEnum.QUESTION_METADATA]: metadataValue ? metadataValue : '' })
+  answerData.push({ [customID + ActivityEnum.QUESTION_COMMENT]: commentValue ? commentValue : '' })
+
+  return answerData
+}
+
 function extractionAnswerCustomID(activityFillingList: any, activityNavigationTrackerItems: any, question: any): any {
   let questionAnswer: any[] = []
   let QuestionFill: any
@@ -181,16 +192,28 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
     const metadata = metadataOptions(QuestionFill.metadata.value, question)
 
     switch (QuestionFill.answer.type) {
+      case ActivityEnum.FILE_UPLOAD_QUESTION: {
+        let fileName: string = ''
+        if (QuestionFill.answer.value) {
+          QuestionFill.answer.value.forEach((items: any, index: number) => {
+            if (QuestionFill.answer.value.length-1 == index) {
+              fileName = fileName.concat(items.name)
+            } else {
+              fileName = fileName.concat(items.name + ',')
+            }
+          })
+        }
+
+        questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, fileName, metadata, QuestionFill.comment))
+        break;
+      }
       case ActivityEnum.SINGLE_SELECTION_QUESTION: {
-        questionAnswer.push({ [question.customID]: getSingleSelectionExtractionValue(QuestionFill.answer.value, question) })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+        questionAnswer = attributeQuestion(question.customID, getSingleSelectionExtractionValue(QuestionFill.answer.value, question), metadata, QuestionFill.comment)
+
         break;
       }
       case ActivityEnum.CALENDAR_QUESTION: {
-        questionAnswer.push({ [question.customID]: QuestionFill.answer.value ? QuestionFill.answer.value.value : '' })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+        questionAnswer = attributeQuestion(question.customID, QuestionFill.answer.value.value, metadata, QuestionFill.comment)
 
         break;
       }
@@ -200,8 +223,8 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
             [items.option]: items.state ? '1' : '0'
           }
         })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+
+        questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, null, metadata, QuestionFill.comment))
 
         break;
       }
@@ -214,8 +237,8 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
             }
           })
         })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
+
+        questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, null, metadata, QuestionFill.comment))
 
         break;
       }
@@ -228,16 +251,11 @@ function extractionAnswerCustomID(activityFillingList: any, activityNavigationTr
             }
           })
         })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
-
+        questionAnswer = questionAnswer.concat(attributeQuestion(question.customID, null, metadata, QuestionFill.comment))
         break;
       }
       default: {
-        questionAnswer.push({ [question.customID]: QuestionFill.answer.value ? QuestionFill.answer.value.toString() : '' })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: metadata })
-        questionAnswer.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: QuestionFill.comment ? QuestionFill.comment : '' })
-
+        questionAnswer = attributeQuestion(question.customID, QuestionFill.answer.value, metadata, QuestionFill.comment)
         break;
       }
     }
@@ -269,8 +287,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
               }
             }
           })
-          questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
-          questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+          questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         }
         break;
       }
@@ -285,8 +302,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
               }
             })
           })
-          questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
-          questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+          questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         }
         break;
       }
@@ -301,8 +317,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
               }
             })
           })
-          questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
-          questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
+          questionSkipp = questionSkipp.concat(attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null))
         }
         break;
       }
@@ -313,10 +328,7 @@ function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
         break;
       }
       default: {
-        questionSkipp.push({ [question.customID]: '' })
-        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_METADATA]: ActivityEnum.SKIPPED_ANSWER })
-        questionSkipp.push({ [question.customID + ActivityEnum.QUESTION_COMMENT]: '' })
-
+        questionSkipp = attributeQuestion(question.customID, null, ActivityEnum.SKIPPED_ANSWER, null)
         break;
       }
     }
