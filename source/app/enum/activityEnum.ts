@@ -13,6 +13,7 @@ enum ActivityEnum {
   TEXT_ITEM = 'TextItem',
   IMAGE_ITEM = 'ImageItem',
   SKIPPED = 'SKIPPED',
+  VISITED = 'VISITED',
   SKIPPED_ANSWER = ".P"
 }
 
