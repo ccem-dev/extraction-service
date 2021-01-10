@@ -2,6 +2,7 @@ enum ActivityEnum {
   FINALIZED = 'FINALIZED',
   INITIALIZED_OFFLINE = 'INITIALIZED_OFFLINE',
   CREATED = 'CREATED',
+  SAVED = 'SAVED',
   QUESTION_METADATA = '_metadata',
   QUESTION_COMMENT = '_comment',
   SINGLE_SELECTION_QUESTION = 'SingleSelectionQuestion',

@@ -18,7 +18,7 @@ class ExtrationService {
 
     try {
       if (!ObjectId.isValid(activityId)) {
-        return new NotAcceptableResponse();
+        throw new NotAcceptableResponse();
       }
 
       activity = await this.getActivity(activityId)
@@ -30,16 +30,16 @@ class ExtrationService {
         activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
 
         activityInfo = buildActivityInfo(activity)
-        if (survey && activityFillingList.length != 0) {
+        if (survey && activityInfo.activityStatusInfo) {
           dictionary = dictionaryCustomIdAndFillAnswer(activityFillingList, activityNavigationTrackerItems, survey)
-          const extraction = await persist(activity, activityInfo, dictionary);
+          await persist(activity, activityInfo, dictionary);
 
-          return new SuccessResponse(activity);
+          return new SuccessResponse();
         } else {
-          return new NotFoundResponse()
+          throw new NotFoundResponse({ message: "Survey not found or Activity unsaved or finished" })
         }
       } else {
-        return new NotFoundResponse();
+        throw new NotFoundResponse({ message: "Activity not found or discarded" });
       }
     } catch (e) {
       console.error(e);
@@ -52,7 +52,7 @@ class ExtrationService {
 
     try {
       if (!ObjectId.isValid(activityId)) {
-        return new NotAcceptableResponse();
+        throw new NotAcceptableResponse();
       }
 
       resultActivity = await ActivityModel.findOne({
@@ -77,19 +77,27 @@ class ExtrationService {
       return resultSurvey ? resultSurvey.toJSON() : null
     }
     catch (e) {
+      console.error(e);
       throw new InternalServerErrorResponse(e)
     }
   }
 
   async remove(activityId: string): Promise<IResponse> {
+    let deleteResult
     try {
       if (!ObjectId.isValid(activityId)) {
-        return new NotAcceptableResponse();
+        throw new NotAcceptableResponse();
       }
 
-      let deleteResult = await ExtractionModel.deleteOne({ "activityId": new ObjectId(activityId) });
+      deleteResult = await ExtractionModel.deleteOne({ "activityId": new ObjectId(activityId) });
+
     } catch (e) {
+      console.error(e);
       throw new InternalServerErrorResponse(e)
+    }
+
+    if (deleteResult.n == 0) {
+      throw new NotFoundResponse({ message: "Activity not found" })
     }
 
     return new SuccessResponse()
@@ -98,7 +106,7 @@ class ExtrationService {
 
 async function persist(activity: any, activityInfo: any, dictionary: any) {
   try {
-    return await ExtractionModel.updateOne({ activityId: activity._id }, {
+    await ExtractionModel.updateOne({ activityId: activity._id }, {
       activityId: ObjectId(activity._id),
       acronym: activity.surveyForm.acronym,
       version: activity.surveyForm.version,
@@ -120,7 +128,7 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
     }, { upsert: true }).exec();
 
   } catch (e) {
-    console.error(e)
+    console.error(e);
     throw new InternalServerErrorResponse(e)
   }
 }
@@ -139,7 +147,6 @@ function dictionaryCustomIdAndFillAnswer(activityFillingList: any, activityNavig
     }
   })
 
-  console.log(result)
   return result
 }
 
@@ -186,8 +193,6 @@ function attributeQuestion(customID: string, answerValue: any, metadataValue: st
 function extractionAnswerCustomID(activityFillingList: any, activityNavigationTrackerItems: any, question: any): any {
   let questionAnswer: any[] = []
   let QuestionFill: any
-
-  console.log(question.customID)
 
   const skipp = skippAnswer(activityNavigationTrackerItems, question)
 
@@ -351,16 +356,11 @@ function navigationItems(activityNavigationTrackerItems: any, questionID: string
 function skippAnswer(activityNavigationTrackerItems: any, question: any): any {
   let NavigationItems: any
 
-  // console.log(activityNavigationTrackerItems)
-  console.log(question.templateID)
-
   NavigationItems = navigationItems(activityNavigationTrackerItems, question.templateID)
 
   if (NavigationItems.state == ActivityEnum.SKIPPED) {
     return getQuestionItems(null, question, ActivityEnum.SKIPPED_ANSWER)
   }
-
-  console.log(NavigationItems.state)
 
   return null
 }
@@ -374,7 +374,8 @@ function buildActivityInfo(activity: any) {
     currentStatusDate: string,
     currentStatusName: string,
     activityInterviewerEmail: string,
-    activityExternalId: string
+    activityExternalId: string,
+    activityStatusInfo: boolean
   }
 
   let activityInterviews: any = activity.interviews.length != 0 ? activity.interviews[activity.interviews.length - 1] : null
@@ -382,12 +383,14 @@ function buildActivityInfo(activity: any) {
   let activityLastFinalization: any
   let activityCreation: any
   let activityPaperRealization: any
+  let activityStatus: boolean
 
   if (activity.statusHistory.length != 0) {
     activityStatusHistory = activity.statusHistory[activity.statusHistory.length - 1]
     activityLastFinalization = activity.statusHistory.reverse().find((items: any) => items.name == ActivityEnum.FINALIZED)
     activityCreation = activity.statusHistory.find((items: any) => items.name == ActivityEnum.CREATED)
     activityPaperRealization = activity.statusHistory.find((items: any) => items.name == ActivityEnum.INITIALIZED_OFFLINE)
+    activityStatus = activity.statusHistory.some((items: any) => items.name == ActivityEnum.FINALIZED || items.name == ActivityEnum.SAVED)
   }
 
   let buildActivityInfo: ActivityInfo = {
@@ -398,7 +401,8 @@ function buildActivityInfo(activity: any) {
     activityPaperRealizationDate: activityPaperRealization ? activityPaperRealization.date : '',
     activityPaperEmail: activityPaperRealization ? activityPaperRealization.user.email : '',
     activityInterviewerEmail: activityInterviews ? activityInterviews.interviewer.email : '',
-    activityExternalId: activity.externalID ? activity.externalID : ''
+    activityExternalId: activity.externalID ? activity.externalID : '',
+    activityStatusInfo: activityStatus
   }
 
   return buildActivityInfo
