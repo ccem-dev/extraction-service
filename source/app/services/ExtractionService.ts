@@ -113,7 +113,7 @@ async function persist(activity: any, activityInfo: any, dictionary: any) {
       recruitmentNumber: activity.participantData.recruitmentNumber,
       participant_field_center: activity.participantData.fieldCenter.acronym,//TODO review center participant
       mode: activity.mode,
-      type: '',// TODO review
+      type: '',// unused type to fill
       category: activity.category.name,
       participant_field_center_by_activity: activity.participantData.fieldCenter.acronym,
       interviewer: activityInfo.activityInterviewerEmail,
