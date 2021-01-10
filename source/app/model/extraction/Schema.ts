@@ -14,10 +14,10 @@ class Extraction {
   public acronym?: string;
 
   @prop({ required: true })
-  public version?: number;
+  public version?: string;
 
   @prop({ required: true })
-  public recruitmentNumber?: number;
+  public recruitmentNumber?: string;
 
   @prop()
   public participant_field_center?: string;
