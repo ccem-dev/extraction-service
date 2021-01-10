@@ -156,7 +156,7 @@ async function persist(activity: any, activityInfo: any, dictionary: any, partic
       paper_interviewer: activityInfo.activityPaperEmail,
       last_finalization_date: activityInfo.activityLastFinalizationDate,
       external_id: activityInfo.activityExternalId,
-      obj: dictionary
+      dictionary: dictionary
     }, { upsert: true }).exec();
 
   } catch (e) {
@@ -432,7 +432,7 @@ function buildActivityInfo(activity: any) {
     currentStatusDate: activityStatusHistory ? activityStatusHistory.date : '',
     activityPaperRealizationDate: activityPaperRealization ? activityPaperRealization.date : '',
     activityPaperEmail: activityPaperRealization ? activityPaperRealization.user.email : '',
-    activityInterviewerEmail: activityInterviews.interviewer.email  ? activityInterviews.interviewer.email : '',
+    activityInterviewerEmail: activityInterviews.interviewer.email ? activityInterviews.interviewer.email : '',
     activityExternalId: activity.externalID ? activity.externalID : '',
     activityStatusInfo: activityStatus
   }

@@ -59,7 +59,7 @@ class Extraction {
   public external_id?: string
 
   @prop({ required: true })
-  public obj: Dic = {}
+  public dictionary: Dic = {}
 }
 
 export default Extraction;
