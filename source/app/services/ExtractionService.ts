@@ -3,6 +3,7 @@ import { Types } from "mongoose";
 import ExtractionModel from "../model/extraction/Model";
 import ActivityModel from "../model/activity/Model";
 import SurveyModel from "../model/survey/Model";
+import ParticipantModel from "../model/participant/Model"
 import ObjectId = Types.ObjectId;
 import ActivityEnum from "../enum/activityEnum"
 
@@ -15,35 +16,39 @@ class ExtrationService {
     let activityNavigationTracker: any
     let activityFillingList: any[]
     let activityNavigationTrackerItems: any[]
+    let participant: any
+    let participantFieldCenter: string
 
     try {
       if (!ObjectId.isValid(activityId)) {
-        throw new NotAcceptableResponse();
+        throw new NotAcceptableResponse()
       }
 
       activity = await this.getActivity(activityId)
 
       if (activity) {
+        participant = await this.getParticipant(activity.participantData.recruitmentNumber)
         survey = await this.getSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
         activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
         activityNavigationTracker = activity.navigationTracker
         activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
 
         activityInfo = buildActivityInfo(activity)
-        if (survey && activityInfo.activityStatusInfo) {
+        if (survey && activityInfo.activityStatusInfo && participant) {
+          participantFieldCenter = participant.fieldCenter.acronym ? participant.fieldCenter.acronym : ''
           dictionary = dictionaryCustomIdAndFillAnswer(activityFillingList, activityNavigationTrackerItems, survey)
-          await persist(activity, activityInfo, dictionary);
+          await persist(activity, activityInfo, dictionary, participantFieldCenter);
 
-          return new SuccessResponse();
+          return new SuccessResponse()
         } else {
-          throw new NotFoundResponse({ message: "Survey not found or Activity unsaved or finished" })
+          throw new NotFoundResponse()
         }
       } else {
-        throw new NotFoundResponse({ message: "Activity not found or discarded" });
+        throw new NotFoundResponse({ message: "Activity not found or discarded" })
       }
     } catch (e) {
-      console.error(e);
-      throw new InternalServerErrorResponse(e);
+      console.error(e)
+      throw new InternalServerErrorResponse(e)
     }
   }
 
@@ -59,10 +64,33 @@ class ExtrationService {
         '_id': ObjectId(activityId), 'isDiscarded': false
       }).exec()
 
+      if (!resultActivity) {
+        throw new NotFoundResponse({ message: "Activity unsaved or finished or discarded" })
+      }
+
       return resultActivity ? resultActivity.toJSON() : null
     }
     catch (e) {
       console.error(e)
+      throw new InternalServerErrorResponse(e)
+    }
+  }
+
+  async getParticipant(rn: number) {
+    let resultParticipant
+    try {
+      resultParticipant = await ParticipantModel.findOne({
+        'recruitmentNumber': rn
+      }).exec()
+
+      if (!resultParticipant) {
+        throw new NotFoundResponse({ message: "Participant not found" })
+      }
+
+      return resultParticipant ? resultParticipant.toJSON() : null
+    }
+    catch (e) {
+      console.error(e);
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -73,6 +101,10 @@ class ExtrationService {
       resultSurvey = await SurveyModel.findOne({
         'surveyTemplate.identity.acronym': acronym, 'version': version
       }).exec()
+
+      if (!resultSurvey) {
+        throw new NotFoundResponse({ message: "Survey not found" })
+      }
 
       return resultSurvey ? resultSurvey.toJSON() : null
     }
@@ -104,14 +136,14 @@ class ExtrationService {
   }
 };
 
-async function persist(activity: any, activityInfo: any, dictionary: any) {
+async function persist(activity: any, activityInfo: any, dictionary: any, participantFieldCenter: string) {
   try {
     await ExtractionModel.updateOne({ activityId: activity._id }, {
       activityId: ObjectId(activity._id),
       acronym: activity.surveyForm.acronym,
       version: activity.surveyForm.version,
       recruitmentNumber: activity.participantData.recruitmentNumber,
-      participant_field_center: activity.participantData.fieldCenter.acronym,//TODO review center participant
+      participant_field_center: participantFieldCenter,
       mode: activity.mode,
       type: '',// unused type to fill
       category: activity.category.name,
@@ -400,7 +432,7 @@ function buildActivityInfo(activity: any) {
     currentStatusDate: activityStatusHistory ? activityStatusHistory.date : '',
     activityPaperRealizationDate: activityPaperRealization ? activityPaperRealization.date : '',
     activityPaperEmail: activityPaperRealization ? activityPaperRealization.user.email : '',
-    activityInterviewerEmail: activityInterviews ? activityInterviews.interviewer.email : '',
+    activityInterviewerEmail: activityInterviews.interviewer.email  ? activityInterviews.interviewer.email : '',
     activityExternalId: activity.externalID ? activity.externalID : '',
     activityStatusInfo: activityStatus
   }
