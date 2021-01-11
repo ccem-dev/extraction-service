@@ -169,14 +169,16 @@ class ExtrationService {
     let answerAllQuestion: any
     let result: any = {}
 
-    surveyItemContainer.forEach((question: any) => {
-      answerAllQuestion = this.extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
-      if (answerAllQuestion.length != 0) {
-        answerAllQuestion.forEach((items: any) => {
-          Object.assign(result, items);
-        })
-      }
-    })
+    if (surveyItemContainer.length != 0) {
+      surveyItemContainer.forEach((question: any) => {
+        answerAllQuestion = this.extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
+        if (answerAllQuestion.length != 0) {
+          answerAllQuestion.forEach((items: any) => {
+            Object.assign(result, items);
+          })
+        }
+      })
+    }
 
     return result
   }
