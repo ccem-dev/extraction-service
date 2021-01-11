@@ -155,7 +155,7 @@ class ExtrationService {
         paper_interviewer: activityInfo.activityPaperEmail,
         last_finalization_date: activityInfo.activityLastFinalizationDate,
         external_id: activityInfo.activityExternalId,
-        dictionary: dictionary
+        variables: dictionary
       }, { upsert: true }).exec();
 
     } catch (e) {
