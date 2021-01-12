@@ -1,4 +1,4 @@
-import App from './app'
+import App from '../../../config/init/app'
 
 describe("app test", () => {
 

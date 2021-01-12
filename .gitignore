@@ -8,3 +8,6 @@ terraform.*
 **/*swp
 **/.npmrc
 **/dist
+source/coverage
+source/.coverage
+.vscode

@@ -1,9 +1,9 @@
 import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response';
 import { Types } from "mongoose";
-import ExtractionModel from "../model/extraction/Model";
-import ActivityModel from "../model/activity/Model";
-import SurveyModel from "../model/survey/Model";
-import ParticipantModel from "../model/participant/Model"
+import ExtractionModel from "../models/extraction/Model";
+import ActivityModel from "../models/activity/Model";
+import SurveyModel from "../models/survey/Model";
+import ParticipantModel from "../models/participant/Model"
 import ObjectId = Types.ObjectId;
 import ActivityEnum from "../enum/activityEnum"
 
