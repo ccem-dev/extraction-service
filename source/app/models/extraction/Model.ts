@@ -1,5 +1,5 @@
-import Extraction from "../extraction/Schema";
+import Extractions from "./Schema";
 import { getModelForClass } from "@typegoose/typegoose";
-const ExtractionModel = getModelForClass(Extraction);
+const ExtractionsModel = getModelForClass(Extractions);
 
-export default ExtractionModel
+export default ExtractionsModel
