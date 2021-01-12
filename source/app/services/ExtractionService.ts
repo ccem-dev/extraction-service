@@ -1,15 +1,15 @@
 import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response';
-import { Types } from "mongoose";
-import ExtractionModel from "../models/extraction/Model";
-import ActivityModel from "../models/activity/Model";
-import SurveyModel from "../models/survey/Model";
+import { Types } from "mongoose"
+import ExtractionsControllersModel from "../models/extractions_controllers/Model"
+import ExtractionsModel from '../models/extraction/Model'
+import ActivityModel from "../models/activity/Model"
+import SurveyModel from "../models/survey/Model"
 import ParticipantModel from "../models/participant/Model"
-import ObjectId = Types.ObjectId;
+import ObjectId = Types.ObjectId
 import ActivityEnum from "../enum/activityEnum"
 
 class ExtrationService {
   async create(activityId: string): Promise<IResponse> {
-    let dictionary
     let activity
     let survey
     let activityInfo
@@ -25,26 +25,21 @@ class ExtrationService {
       }
 
       activity = await this.getActivity(activityId)
+      participant = await this.getParticipant(activity.participantData.recruitmentNumber)
+      survey = await this.getSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
+      activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
+      activityNavigationTracker = activity.navigationTracker
+      activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
 
-      if (activity) {
-        participant = await this.getParticipant(activity.participantData.recruitmentNumber)
-        survey = await this.getSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
-        activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
-        activityNavigationTracker = activity.navigationTracker
-        activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
+      activityInfo = this.buildActivityInfo(activity)
+      if (activityInfo.activityStatusInfo) {
+        participantFieldCenter = participant.fieldCenter.acronym ? participant.fieldCenter.acronym : ''
+        await this.createExtractionController(activity, activityInfo, participantFieldCenter)
+        await this.dictionaryCustomIdAndValue(activityId, activityFillingList, activityNavigationTrackerItems, survey)
 
-        activityInfo = this.buildActivityInfo(activity)
-        if (survey && activityInfo.activityStatusInfo && participant) {
-          participantFieldCenter = participant.fieldCenter.acronym ? participant.fieldCenter.acronym : ''
-          dictionary = this.dictionaryCustomIdAndFillAnswer(activityFillingList, activityNavigationTrackerItems, survey)
-          await this.persist(activity, activityInfo, dictionary, participantFieldCenter);
-
-          return new SuccessResponse()
-        } else {
-          throw new NotFoundResponse()
-        }
+        return new SuccessResponse()
       } else {
-        throw new NotFoundResponse({ message: "Activity not found or discarded" })
+        throw new NotFoundResponse({ message: "Activity unsaved or not finished" })
       }
     } catch (e) {
       console.error(e)
@@ -65,7 +60,7 @@ class ExtrationService {
       }).exec()
 
       if (!resultActivity) {
-        throw new NotFoundResponse({ message: "Activity unsaved or finished or discarded" })
+        throw new NotFoundResponse({ message: "Activity not Found or discarded" })
       }
 
       return resultActivity ? resultActivity.toJSON() : null
@@ -115,29 +110,52 @@ class ExtrationService {
   }
 
   async remove(activityId: string): Promise<IResponse> {
-    let deleteResult
+    let deleteExtractionsControllerResult
     try {
       if (!ObjectId.isValid(activityId)) {
         throw new NotAcceptableResponse();
       }
 
-      deleteResult = await ExtractionModel.deleteOne({ "activityId": new ObjectId(activityId) });
+      deleteExtractionsControllerResult = await ExtractionsControllersModel.deleteOne({ "activityId": new ObjectId(activityId) });
 
     } catch (e) {
       console.error(e);
       throw new InternalServerErrorResponse(e)
     }
 
-    if (deleteResult.n == 0) {
+    if (deleteExtractionsControllerResult.n == 0) {
       throw new NotFoundResponse({ message: "Activity not found" })
+    } else {
+      await this.removeExtractions(activityId)
     }
-
     return new SuccessResponse()
   }
 
-  private async persist(activity: any, activityInfo: any, dictionary: any, participantFieldCenter: string) {
+  private async removeExtractions(activityId: string) {
     try {
-      await ExtractionModel.updateOne({ activityId: activity._id }, {
+      await ExtractionsModel.deleteMany({ "activityId": new ObjectId(activityId) });
+    } catch (e) {
+      console.error(e);
+      throw new InternalServerErrorResponse(e)
+    }
+  }
+
+  private async createExtraction(activityId: string, customId: string, value: any) {
+    try {
+      await ExtractionsModel.updateOne({ activityId: activityId, customId: customId }, {
+        activityId: ObjectId(activityId),
+        customId: customId,
+        value: value
+      }, { upsert: true })
+    } catch (e) {
+      console.error(e)
+      throw new InternalServerErrorResponse(e)
+    }
+  }
+
+  private async createExtractionController(activity: any, activityInfo: any, participantFieldCenter: string) {
+    try {
+      return await ExtractionsControllersModel.updateOne({ activityId: activity._id }, {
         activityId: ObjectId(activity._id),
         acronym: activity.surveyForm.acronym,
         version: activity.surveyForm.version,
@@ -154,9 +172,8 @@ class ExtrationService {
         paper_realization_date: activityInfo.activityPaperRealizationDate,
         paper_interviewer: activityInfo.activityPaperEmail,
         last_finalization_date: activityInfo.activityLastFinalizationDate,
-        external_id: activityInfo.activityExternalId,
-        variables: dictionary
-      }, { upsert: true }).exec();
+        external_id: activityInfo.activityExternalId
+      }, { upsert: true })
 
     } catch (e) {
       console.error(e);
@@ -164,23 +181,23 @@ class ExtrationService {
     }
   }
 
-  private dictionaryCustomIdAndFillAnswer(activityFillingList: any, activityNavigationTrackerItems: any, survey: any) {
+  private async dictionaryCustomIdAndValue(activityId: string, activityFillingList: any, activityNavigationTrackerItems: any, survey: any) {
     let surveyItemContainer: any[] = survey.surveyTemplate ? survey.surveyTemplate.itemContainer : []
     let answerAllQuestion: any
-    let result: any = {}
 
     if (surveyItemContainer.length != 0) {
       surveyItemContainer.forEach((question: any) => {
         answerAllQuestion = this.extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
         if (answerAllQuestion.length != 0) {
           answerAllQuestion.forEach((items: any) => {
-            Object.assign(result, items);
+            Object.entries(items).forEach(entry => {
+              const [key, value] = entry;
+              this.createExtraction(activityId, key, value)
+            });
           })
         }
       })
     }
-
-    return result
   }
 
   private metadataOptions(value: string, question: any): string {

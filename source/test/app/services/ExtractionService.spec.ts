@@ -2,7 +2,7 @@ import ExtractionService from '../../../app/services/ExtractionService'
 import ActivityModel from '../../../app/models/activity/Model'
 import SurveyModel from '../../../app/models/survey/Model'
 import ParticipantModel from '../../../app/models/participant/Model'
-import ExtractionModel from '../../../app/models/extraction/Model'
+import ExtractionModel from '../../../app/models/extractions_controllers/Model'
 
 describe('ExtractionService.ts Tests', function () {
   const activityId = '5a38062628f10d1043711079'
