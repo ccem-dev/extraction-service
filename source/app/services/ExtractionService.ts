@@ -25,13 +25,20 @@ class ExtrationService {
       }
 
       activity = await this.getActivity(activityId)
-      participant = await this.getParticipant(activity.participantData.recruitmentNumber)
-      survey = await this.getSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
-      activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
-      activityNavigationTracker = activity.navigationTracker
-      activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
 
-      activityInfo = this.buildActivityInfo(activity)
+      if (activity) {
+        activity = activity.toJSON()
+        participant = await this.getParticipant(activity.participantData.recruitmentNumber)
+        survey = await this.getSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
+        participant = participant.toJSON()
+        survey = survey.toJSON()
+        activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
+        activityNavigationTracker = activity.navigationTracker
+        activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
+
+        activityInfo = this.buildActivityInfo(activity)
+      }
+
       if (activityInfo.activityStatusInfo) {
         participantFieldCenter = participant.fieldCenter.acronym ? participant.fieldCenter.acronym : ''
         await this.createExtractionController(activity, activityInfo, participantFieldCenter)
@@ -42,7 +49,6 @@ class ExtrationService {
         throw new NotFoundResponse({ message: "Activity unsaved or not finished" })
       }
     } catch (e) {
-      console.error(e)
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -57,16 +63,15 @@ class ExtrationService {
 
       resultActivity = await ActivityModel.findOne({
         '_id': ObjectId(activityId), 'isDiscarded': false
-      }).exec()
+      })
 
       if (!resultActivity) {
         throw new NotFoundResponse({ message: "Activity not Found or discarded" })
       }
 
-      return resultActivity ? resultActivity.toJSON() : null
+      return resultActivity
     }
     catch (e) {
-      console.error(e)
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -76,16 +81,15 @@ class ExtrationService {
     try {
       resultParticipant = await ParticipantModel.findOne({
         'recruitmentNumber': rn
-      }).exec()
+      })
 
       if (!resultParticipant) {
         throw new NotFoundResponse({ message: "Participant not found" })
       }
 
-      return resultParticipant ? resultParticipant.toJSON() : null
+      return resultParticipant
     }
     catch (e) {
-      console.error(e);
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -95,16 +99,15 @@ class ExtrationService {
     try {
       resultSurvey = await SurveyModel.findOne({
         'surveyTemplate.identity.acronym': acronym, 'version': version
-      }).exec()
+      })
 
       if (!resultSurvey) {
         throw new NotFoundResponse({ message: "Survey not found" })
       }
 
-      return resultSurvey ? resultSurvey.toJSON() : null
+      return resultSurvey
     }
     catch (e) {
-      console.error(e);
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -119,7 +122,6 @@ class ExtrationService {
       deleteExtractionsControllerResult = await ExtractionsControllersModel.deleteOne({ "activityId": new ObjectId(activityId) });
 
     } catch (e) {
-      console.error(e);
       throw new InternalServerErrorResponse(e)
     }
 
@@ -135,7 +137,6 @@ class ExtrationService {
     try {
       await ExtractionsModel.deleteMany({ "activityId": new ObjectId(activityId) });
     } catch (e) {
-      console.error(e);
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -148,7 +149,6 @@ class ExtrationService {
         value: value
       }, { upsert: true })
     } catch (e) {
-      console.error(e)
       throw new InternalServerErrorResponse(e)
     }
   }
@@ -176,7 +176,7 @@ class ExtrationService {
       }, { upsert: true })
 
     } catch (e) {
-      console.error(e);
+
       throw new InternalServerErrorResponse(e)
     }
   }

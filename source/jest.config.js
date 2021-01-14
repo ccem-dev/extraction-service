@@ -9,7 +9,7 @@ module.exports = {
   },
   moduleFileExtensions: ['ts', 'js'],
   transform: {
-    '^.+\\.(t|j)s$': 'ts-jest',
+    "^.+\\.(js|jsx|ts|tsx)$": "<rootDir>/node\_modules/ts-jest"
   },
   testPathIgnorePatterns: ['/node_modules/', '/lib/'],
   testRegex: ".spec.ts$",

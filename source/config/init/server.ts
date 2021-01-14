@@ -1,4 +1,5 @@
 import App from "./app";
+import { Application } from "express"
 import mongoose from "mongoose"
 const listEndpoints = require('express-list-endpoints');
 
@@ -40,6 +41,10 @@ class Server {
   endpointsList() {
     let endpoints = listEndpoints(App);
     console.table(endpoints)
+  }
+
+  public getApp(): Application {
+    return App
   }
 }
 export default new Server();
