@@ -1,7 +1,5 @@
 import IResponse, {NotFoundResponse, SuccessResponse} from '../utils/response';
 import ElasticsearchService from "./ElasticsearchService";
-import PipelineModel from '../model/pipeline/Model';
-import ExtractionModel from '../model/extraction/Model';
 import CsvService from "./CsvService";
 
 // import R from 'r-integration';
@@ -11,23 +9,6 @@ const EXTRACTIONS_INDEX = 'extractions_';
 class PipelineService {
 
   constructor() {
-  }
-
-  async create(pipelineObj: any){
-    try{
-      let query = await PipelineModel.insertMany(pipelineObj, function(err, doc){
-        if(err){
-          console.log('create', err)
-        }
-      });
-      console.log(query)
-
-      return new SuccessResponse();
-    }
-    catch (e) {
-      console.error(e)
-      return new NotFoundResponse(e);
-    }
   }
 
   async performAsJson (surveyId: string, Rscript:string): Promise<IResponse> {
