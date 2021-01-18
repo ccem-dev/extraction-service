@@ -1,203 +1,97 @@
 import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response';
-import { Types } from "mongoose"
-import ExtractionsControllersModel from "../models/extractions_controllers/Model"
-import ExtractionsModel from '../models/extraction/Model'
-import ActivityModel from "../models/activity/Model"
-import SurveyModel from "../models/survey/Model"
-import ParticipantModel from "../models/participant/Model"
-import ObjectId = Types.ObjectId
 import ActivityEnum from "../enum/activityEnum"
+import ElasticsearchService from "../services/ElasticsearchService"
+import Extractions from "../models/extractions/ExtractionFactory"
 
 class ExtrationService {
-  async create(activityId: string): Promise<IResponse> {
-    let activity
-    let survey
-    let activityInfo
-    let activityNavigationTracker: any
+  private extractionOid: string
+
+  constructor() {
+    this.extractionOid = "extractions_"
+  }
+
+  async create(extractions: any): Promise<IResponse> {
     let activityFillingList: any[]
-    let activityNavigationTrackerItems: any[]
-    let participant: any
-    let participantFieldCenter: string
+    let activityNavigationTrackerItemsSkipped: any[]
+    let surveyItemContainer: any[]
+    let surveyId: string
+    let dictionary: any
 
     try {
-      if (!ObjectId.isValid(activityId)) {
-        throw new NotAcceptableResponse()
-      }
+      if (extractions.activity) {
+        let extraction: Extractions = Extractions.fromJson(extractions.activity);
+        activityFillingList = extractions.activity.fillingList
+        activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems
 
-      activity = await this.getActivity(activityId)
+        if (extractions.survey && extractions.survey.itemContainer) {
+          surveyItemContainer = extractions.survey.itemContainer
+          surveyId = extractions.survey.id
+          dictionary = await this.dictionaryCustomIdAndValue(activityFillingList, activityNavigationTrackerItemsSkipped, surveyItemContainer)
+          extraction.setVariables(dictionary)
 
-      if (activity) {
-        activity = activity.toJSON()
-        participant = await this.getParticipant(activity.participantData.recruitmentNumber)
-        survey = await this.getSurvey(activity.surveyForm.acronym, activity.surveyForm.version)
-        participant = participant.toJSON()
-        survey = survey.toJSON()
-        activityFillingList = activity.fillContainer ? activity.fillContainer.fillingList : []
-        activityNavigationTracker = activity.navigationTracker
-        activityNavigationTrackerItems = activityNavigationTracker.items.length != 0 ? activityNavigationTracker.items : null
-
-        activityInfo = this.buildActivityInfo(activity)
-      }
-
-      if (activityInfo.activityStatusInfo) {
-        participantFieldCenter = participant.fieldCenter.acronym ? participant.fieldCenter.acronym : ''
-        await this.createExtractionController(activity, activityInfo, participantFieldCenter)
-        await this.dictionaryCustomIdAndValue(activityId, activityFillingList, activityNavigationTrackerItems, survey)
-
-        return new SuccessResponse()
+          await this.createExtraction(surveyId, extraction)
+        }
       } else {
-        throw new NotFoundResponse({ message: "Activity unsaved or not finished" })
+        throw new NotFoundResponse({ message: "Activity not found" })
       }
+
+      return new SuccessResponse()
     } catch (e) {
+      console.error(e)
       throw new InternalServerErrorResponse(e)
     }
   }
 
-  async getActivity(activityId: string) {
-    let resultActivity
-
+  async remove(surveyId: string, activityId: string): Promise<IResponse> {
     try {
-      if (!ObjectId.isValid(activityId)) {
-        throw new NotAcceptableResponse();
-      }
-
-      resultActivity = await ActivityModel.findOne({
-        '_id': ObjectId(activityId), 'isDiscarded': false
-      })
-
-      if (!resultActivity) {
-        throw new NotFoundResponse({ message: "Activity not Found or discarded" })
-      }
-
-      return resultActivity
-    }
-    catch (e) {
-      throw new InternalServerErrorResponse(e)
-    }
-  }
-
-  async getParticipant(rn: number) {
-    let resultParticipant
-    try {
-      resultParticipant = await ParticipantModel.findOne({
-        'recruitmentNumber': rn
-      })
-
-      if (!resultParticipant) {
-        throw new NotFoundResponse({ message: "Participant not found" })
-      }
-
-      return resultParticipant
-    }
-    catch (e) {
-      throw new InternalServerErrorResponse(e)
-    }
-  }
-
-  async getSurvey(acronym: string, version: number) {
-    let resultSurvey
-    try {
-      resultSurvey = await SurveyModel.findOne({
-        'surveyTemplate.identity.acronym': acronym, 'version': version
-      })
-
-      if (!resultSurvey) {
-        throw new NotFoundResponse({ message: "Survey not found" })
-      }
-
-      return resultSurvey
-    }
-    catch (e) {
-      throw new InternalServerErrorResponse(e)
-    }
-  }
-
-  async remove(activityId: string): Promise<IResponse> {
-    let deleteExtractionsControllerResult
-    try {
-      if (!ObjectId.isValid(activityId)) {
-        throw new NotAcceptableResponse();
-      }
-
-      deleteExtractionsControllerResult = await ExtractionsControllersModel.deleteOne({ "activityId": new ObjectId(activityId) });
+      await ElasticsearchService.getClient().delete({
+        index: this.extractionOid + surveyId,
+        id: activityId,
+        refresh: true
+      });
 
     } catch (e) {
-      throw new InternalServerErrorResponse(e)
+      if (e.meta && e.meta.body.result == 'not_found') {
+        console.info(e.meta.body)
+        throw new NotFoundResponse()
+      } else {
+        console.error(e)
+        throw new InternalServerErrorResponse(e)
+      }
     }
 
-    if (deleteExtractionsControllerResult.n == 0) {
-      throw new NotFoundResponse({ message: "Activity not found" })
-    } else {
-      await this.removeExtractions(activityId)
-    }
     return new SuccessResponse()
   }
 
-  private async removeExtractions(activityId: string) {
+  private async createExtraction(surveyId: string, extractions: Extractions) {
     try {
-      await ExtractionsModel.deleteMany({ "activityId": new ObjectId(activityId) });
+      await ElasticsearchService.getClient().update({
+        index: this.extractionOid + surveyId,
+        id: extractions.getActivityId(),
+        refresh: true,
+        body: {
+          doc: extractions.toJsonObject(),
+          doc_as_upsert: true
+        }
+      })
     } catch (e) {
+      console.error(e)
       throw new InternalServerErrorResponse(e)
     }
   }
 
-  private async createExtraction(activityId: string, customId: string, value: any) {
-    try {
-      await ExtractionsModel.updateOne({ activityId: activityId, customId: customId }, {
-        activityId: ObjectId(activityId),
-        customId: customId,
-        value: value
-      }, { upsert: true })
-    } catch (e) {
-      throw new InternalServerErrorResponse(e)
-    }
-  }
-
-  private async createExtractionController(activity: any, activityInfo: any, participantFieldCenter: string) {
-    try {
-      return await ExtractionsControllersModel.updateOne({ activityId: activity._id }, {
-        activityId: ObjectId(activity._id),
-        acronym: activity.surveyForm.acronym,
-        version: activity.surveyForm.version,
-        recruitmentNumber: activity.participantData.recruitmentNumber,
-        participant_field_center: participantFieldCenter,
-        mode: activity.mode,
-        type: '',// unused type to fill
-        category: activity.category.name,
-        participant_field_center_by_activity: activity.participantData.fieldCenter.acronym,
-        interviewer: activityInfo.activityInterviewerEmail,
-        current_status: activityInfo.currentStatusName,
-        current_status_date: activityInfo.currentStatusDate,
-        creation_date: activityInfo.activityCreationDate,
-        paper_realization_date: activityInfo.activityPaperRealizationDate,
-        paper_interviewer: activityInfo.activityPaperEmail,
-        last_finalization_date: activityInfo.activityLastFinalizationDate,
-        external_id: activityInfo.activityExternalId
-      }, { upsert: true })
-
-    } catch (e) {
-
-      throw new InternalServerErrorResponse(e)
-    }
-  }
-
-  private async dictionaryCustomIdAndValue(activityId: string, activityFillingList: any, activityNavigationTrackerItems: any, survey: any) {
-    let surveyItemContainer: any[] = survey.surveyTemplate ? survey.surveyTemplate.itemContainer : []
-    let answerAllQuestion: any
+  private async dictionaryCustomIdAndValue(activityFillingList: any, activityNavigationTrackerItems: any, surveyItemContainer: any) {
+    let answerAllQuestions: any[] = []
+    let answerQuestions: any[]
 
     if (surveyItemContainer.length != 0) {
       surveyItemContainer.forEach((question: any) => {
-        answerAllQuestion = this.extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
-        if (answerAllQuestion.length != 0) {
-          answerAllQuestion.forEach((items: any) => {
-            Object.entries(items).forEach(entry => {
-              const [key, value] = entry;
-              this.createExtraction(activityId, key, value)
-            });
-          })
-        }
+        answerQuestions = this.extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
+        answerAllQuestions = answerAllQuestions.concat(answerQuestions)
       })
     }
+
+    return answerAllQuestions
   }
 
   private metadataOptions(value: string, question: any): string {
@@ -231,11 +125,11 @@ class ExtrationService {
   private attributeQuestion(customID: string, answerValue: any, metadataValue: string, commentValue: string, option: boolean): any[] {
     let answerData: any[] = []
     if (option) {
-      answerData.push({ [customID]: answerValue ? answerValue.toString() : '' })
+      answerData.push({ customId: customID, value: answerValue ? answerValue.toString() : '' })
     }
 
-    answerData.push({ [customID + ActivityEnum.QUESTION_METADATA]: metadataValue ? metadataValue : '' })
-    answerData.push({ [customID + ActivityEnum.QUESTION_COMMENT]: commentValue ? commentValue : '' })
+    answerData.push({ customId: customID + ActivityEnum.QUESTION_METADATA, value: metadataValue ? metadataValue : '' })
+    answerData.push({ customId: customID + ActivityEnum.QUESTION_COMMENT, value: commentValue ? commentValue : '' })
 
     return answerData
   }
@@ -256,7 +150,6 @@ class ExtrationService {
         questionAnswer = this.getQuestionItems(QuestionFill, question, metadata)
       }
     }
-
     return questionAnswer
   }
 
@@ -289,7 +182,7 @@ class ExtrationService {
         if (questionFill) {
           if (questionFill.answer.value) {
             questionFill.answer.value.forEach((items: any, index: number) => {
-              if (questionFill.answer.value.length - 1 == index) {
+              if (questionFill.answer.value.length1 == index) {
                 fileName = fileName.concat(items.name)
               } else {
                 fileName = fileName.concat(items.name + ',')
@@ -307,7 +200,7 @@ class ExtrationService {
           if (questionFill.answer.value) {
             questionItems = questionFill.answer.value.map((items: any) => {
               return {
-                [items.option]: items.state ? '1' : '0'
+                customId: items.option, value: items.state ? '1' : '0'
               }
             })
           }
@@ -316,7 +209,7 @@ class ExtrationService {
             questionItems = question.options.map((option: any) => {
               if (option.customOptionID) {
                 return {
-                  [option.customOptionID]: ''
+                  customId: option.customOptionID, value: ''
                 }
               }
             })
@@ -332,7 +225,7 @@ class ExtrationService {
             questionFill.answer.value.forEach((item: any) => {
               questionItems = item.map((items: any) => {
                 return {
-                  [items.gridText]: items.value ? items.value : ''
+                  customId: items.gridText, value: items.value ? items.value : ''
                 }
               })
             })
@@ -343,7 +236,7 @@ class ExtrationService {
               questionItems = line.gridTextList.map((items: any) => {
                 if (items) {
                   return {
-                    [items.customID]: ''
+                    customId: items.customID, value: ''
                   }
                 }
               })
@@ -360,7 +253,7 @@ class ExtrationService {
             questionFill.answer.value.forEach((item: any) => {
               questionItems = item.map((items: any) => {
                 return {
-                  [items.customID]: items.value ? items.value.toString() : ''
+                  customId: items.customID, value: items.value ? items.value.toString() : ''
                 }
               })
             })
@@ -371,7 +264,7 @@ class ExtrationService {
               questionItems = line.gridIntegerList.map((items: any) => {
                 if (items) {
                   return {
-                    [items.customID]: ''
+                    customId: items.customID, value: ''
                   }
                 }
               })
@@ -403,60 +296,20 @@ class ExtrationService {
     return activityNavigationTrackerItems.find((items: any) => items.id == questionID)
   }
 
-  private skippAnswer(activityNavigationTrackerItems: any, question: any): any {
-    let NavigationItems: any
+  private skippAnswer(activityNavigationTrackerItemsSkipped: any, question: any): any {
+    let NavigationItem: any
 
-    NavigationItems = this.navigationItems(activityNavigationTrackerItems, question.templateID)
+    if (activityNavigationTrackerItemsSkipped.length == 0) {
+      return null
+    }
 
-    if (NavigationItems.state == ActivityEnum.SKIPPED) {
+    NavigationItem = this.navigationItems(activityNavigationTrackerItemsSkipped, question.templateID)
+
+    if (NavigationItem && NavigationItem.state == ActivityEnum.SKIPPED) {
       return this.getQuestionItems(null, question, ActivityEnum.SKIPPED_ANSWER)
     }
-
-    return null
   }
 
-  private buildActivityInfo(activity: any) {
-    type ActivityInfo = {
-      activityLastFinalizationDate: string,
-      activityPaperRealizationDate: string,
-      activityPaperEmail: string,
-      activityCreationDate: string,
-      currentStatusDate: string,
-      currentStatusName: string,
-      activityInterviewerEmail: string,
-      activityExternalId: string,
-      activityStatusInfo: boolean
-    }
-
-    let activityInterviews: any = activity.interviews.length != 0 ? activity.interviews[activity.interviews.length - 1] : null
-    let activityStatusHistory: any = {}
-    let activityLastFinalization: any
-    let activityCreation: any
-    let activityPaperRealization: any
-    let activityStatus: boolean
-
-    if (activity.statusHistory.length != 0) {
-      activityStatusHistory = activity.statusHistory[activity.statusHistory.length - 1]
-      activityLastFinalization = activity.statusHistory.reverse().find((items: any) => items.name == ActivityEnum.FINALIZED)
-      activityCreation = activity.statusHistory.find((items: any) => items.name == ActivityEnum.CREATED)
-      activityPaperRealization = activity.statusHistory.find((items: any) => items.name == ActivityEnum.INITIALIZED_OFFLINE)
-      activityStatus = activity.statusHistory.some((items: any) => items.name == ActivityEnum.FINALIZED || items.name == ActivityEnum.SAVED)
-    }
-
-    let buildActivityInfo: ActivityInfo = {
-      activityLastFinalizationDate: activityLastFinalization ? activityLastFinalization.date : '',
-      activityCreationDate: activityCreation ? activityCreation.date : '',
-      currentStatusName: activityStatusHistory ? activityStatusHistory.name : '',
-      currentStatusDate: activityStatusHistory ? activityStatusHistory.date : '',
-      activityPaperRealizationDate: activityPaperRealization ? activityPaperRealization.date : '',
-      activityPaperEmail: activityPaperRealization ? activityPaperRealization.user.email : '',
-      activityInterviewerEmail: activityInterviews.interviewer.email ? activityInterviews.interviewer.email : '',
-      activityExternalId: activity.externalID ? activity.externalID : '',
-      activityStatusInfo: activityStatus
-    }
-
-    return buildActivityInfo
-  }
 };
 
 export default new ExtrationService()
