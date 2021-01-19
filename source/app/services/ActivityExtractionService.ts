@@ -40,7 +40,7 @@ class ActivityExtrationService {
       console.error(e)
       throw new InternalServerErrorResponse(e)
     }
-  } 
+  }
 
   async remove(surveyId: string, activityId: string): Promise<IResponse> {
     try {
@@ -178,16 +178,14 @@ class ActivityExtrationService {
       }
       case ActivityEnum.FILE_UPLOAD_QUESTION: {
         let fileName: string = ''
-        if (questionFill) {
-          if (questionFill.answer.value) {
-            questionFill.answer.value.forEach((items: any, index: number) => {
-              if (questionFill.answer.value.length1 == index) {
-                fileName = fileName.concat(items.name)
-              } else {
-                fileName = fileName.concat(items.name + ',')
-              }
-            })
-          }
+        if (questionFill && questionFill.answer.value) {
+          questionFill.answer.value.forEach((items: any, index: number) => {
+            if (questionFill.answer.value.length1 == index) {
+              fileName = fileName.concat(items.name)
+            } else {
+              fileName = fileName.concat(items.name + ',')
+            }
+          })
           questionComment = questionFill.comment
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, fileName, metadataQuestion, questionComment, optionAnswer))
@@ -195,80 +193,68 @@ class ActivityExtrationService {
       }
       case ActivityEnum.CHECKBOX_QUESTION: {
         optionAnswer = false
-        if (questionFill) {
-          if (questionFill.answer.value) {
-            questionItems = questionFill.answer.value.map((items: any) => {
+        if (questionFill && questionFill.answer.value) {
+          questionItems = questionFill.answer.value.map((items: any) => {
+            return {
+              customId: items.option, value: items.state ? '1' : '0'
+            }
+          })
+        } else if (question.options) {
+          questionItems = question.options.map((option: any) => {
+            if (option.customOptionID) {
               return {
-                customId: items.option, value: items.state ? '1' : '0'
+                customId: option.customOptionID, value: ''
               }
-            })
-          }
-        } else {
-          if (question.options) {
-            questionItems = question.options.map((option: any) => {
-              if (option.customOptionID) {
-                return {
-                  customId: option.customOptionID, value: ''
-                }
-              }
-            })
-          }
+            }
+          })
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
         break;
       }
       case ActivityEnum.GRID_TEXT_QUESTION: {
         optionAnswer = false
-        if (questionFill) {
-          if (questionFill.answer.value) {
-            questionFill.answer.value.forEach((item: any) => {
-              questionItems = item.map((items: any) => {
+        if (questionFill && questionFill.answer.value) {
+          questionFill.answer.value.forEach((item: any) => {
+            questionItems = item.map((items: any) => {
+              return {
+                customId: items.gridText, value: items.value ? items.value : ''
+              }
+            })
+          })
+        } else if (question.lines) {
+          question.lines.forEach((line: any) => {
+            questionItems = line.gridTextList.map((items: any) => {
+              if (items) {
                 return {
-                  customId: items.gridText, value: items.value ? items.value : ''
+                  customId: items.customID, value: ''
                 }
-              })
+              }
             })
-          }
-        } else {
-          if (question.lines) {
-            question.lines.forEach((line: any) => {
-              questionItems = line.gridTextList.map((items: any) => {
-                if (items) {
-                  return {
-                    customId: items.customID, value: ''
-                  }
-                }
-              })
-            })
-          }
+          })
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
         break;
       }
       case ActivityEnum.GRID_INTEGER_QUESTION: {
         optionAnswer = false
-        if (questionFill) {
-          if (questionFill.answer.value) {
-            questionFill.answer.value.forEach((item: any) => {
-              questionItems = item.map((items: any) => {
+        if (questionFill && questionFill.answer.value) {
+          questionFill.answer.value.forEach((item: any) => {
+            questionItems = item.map((items: any) => {
+              return {
+                customId: items.customID, value: items.value ? items.value.toString() : ''
+              }
+            })
+          })
+        } else if (question.lines) {
+          question.lines.forEach((line: any) => {
+            questionItems = line.gridIntegerList.map((items: any) => {
+              if (items) {
                 return {
-                  customId: items.customID, value: items.value ? items.value.toString() : ''
+                  customId: items.customID, value: ''
                 }
-              })
+              }
             })
-          }
-        } else {
-          if (question.lines) {
-            question.lines.forEach((line: any) => {
-              questionItems = line.gridIntegerList.map((items: any) => {
-                if (items) {
-                  return {
-                    customId: items.customID, value: ''
-                  }
-                }
-              })
-            })
-          }
+          })
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
         break;
