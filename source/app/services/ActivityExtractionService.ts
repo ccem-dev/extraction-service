@@ -19,7 +19,7 @@ class ActivityExtrationService {
 
     try {
       if (extractions.activity) {
-        let extraction: ActivityExtractions = ActivityExtractions.fromJson(extractions.activity);        
+        let extraction: ActivityExtractions = ActivityExtractions.fromJson(extractions.activity);
         activityFillingList = extractions.activity.fillingList
         activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems
 
@@ -40,7 +40,7 @@ class ActivityExtrationService {
       console.error(e)
       throw new InternalServerErrorResponse(e)
     }
-  }
+  } 
 
   async remove(surveyId: string, activityId: string): Promise<IResponse> {
     try {
@@ -50,8 +50,9 @@ class ActivityExtrationService {
         refresh: true
       });
 
+      return new SuccessResponse()
     } catch (e) {
-      if (e.meta && e.meta.body.result == 'not_found') {
+      if (e && e.meta && e.meta.body.result == 'not_found') {
         console.info(e.meta.body)
         throw new NotFoundResponse()
       } else {
@@ -59,8 +60,6 @@ class ActivityExtrationService {
         throw new InternalServerErrorResponse(e)
       }
     }
-
-    return new SuccessResponse()
   }
 
   private async createExtraction(surveyId: string, extractions: ActivityExtractions) {
@@ -76,7 +75,7 @@ class ActivityExtrationService {
       })
     } catch (e) {
       console.error(e)
-      throw new InternalServerErrorResponse(e)
+      throw new Error(e)
     }
   }
 
