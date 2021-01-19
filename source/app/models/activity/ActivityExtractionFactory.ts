@@ -2,8 +2,8 @@ interface Dic {
   [key: string]: any;
 }
 
-class Extractions {
-  private id?: string;
+class ActivityExtractions {
+  private activityId?: string;
   private acronym?: string;
   private version?: number;
   private recruitment_number?: string;
@@ -26,7 +26,7 @@ class Extractions {
     participant_field_center?: string, mode?: string, category?: string, participant_field_center_by_activity?: string,
     interviewer?: string, current_status?: string, current_status_date?: string, creation_date?: string, paper_realization_date?: string,
     paper_interviewer?: string, last_finalization_date?: string, external_id?: string, variables?: any) {
-    this.id = id
+    this.activityId = id
     this.acronym = acronym
     this.version = version
     this.recruitment_number = recruitmentNumber
@@ -46,10 +46,10 @@ class Extractions {
   }
 
   public static fromJson(items: any) {
-    let extractions: any = new Extractions();
+    let extractions: any = new ActivityExtractions();
     for (let index in items) {
       if (extractions.hasOwnProperty(index)) {
-        extractions[index] = items[index]; // care, has to be result
+        extractions[index] = items[index]; 
       }
     }
     return extractions;
@@ -64,7 +64,7 @@ class Extractions {
   }
 
   public getActivityId() {
-    return this.id;
+    return this.activityId;
   }
 
   public getAcronym() {
@@ -116,4 +116,4 @@ class Extractions {
   }
 }
 
-export default Extractions;
+export default ActivityExtractions;

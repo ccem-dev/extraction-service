@@ -1,9 +1,9 @@
 import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response';
 import ActivityEnum from "../enum/activityEnum"
-import ElasticsearchService from "../services/ElasticsearchService"
-import Extractions from "../models/extractions/ExtractionFactory"
+import ElasticsearchService from "./ElasticsearchService"
+import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
 
-class ExtrationService {
+class ActivityExtrationService {
   private extractionOid: string
 
   constructor() {
@@ -19,7 +19,7 @@ class ExtrationService {
 
     try {
       if (extractions.activity) {
-        let extraction: Extractions = Extractions.fromJson(extractions.activity);
+        let extraction: ActivityExtractions = ActivityExtractions.fromJson(extractions.activity);        
         activityFillingList = extractions.activity.fillingList
         activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems
 
@@ -63,7 +63,7 @@ class ExtrationService {
     return new SuccessResponse()
   }
 
-  private async createExtraction(surveyId: string, extractions: Extractions) {
+  private async createExtraction(surveyId: string, extractions: ActivityExtractions) {
     try {
       await ElasticsearchService.getClient().update({
         index: this.extractionOid + surveyId,
@@ -312,4 +312,4 @@ class ExtrationService {
 
 };
 
-export default new ExtrationService()
+export default new ActivityExtrationService()
