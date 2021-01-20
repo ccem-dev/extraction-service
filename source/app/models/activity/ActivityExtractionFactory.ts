@@ -25,7 +25,7 @@ class ActivityExtractions {
   constructor(id?: string, acronym?: string, version?: number, recruitmentNumber?: string,
     participant_field_center?: string, mode?: string, category?: string, participant_field_center_by_activity?: string,
     interviewer?: string, current_status?: string, current_status_date?: string, creation_date?: string, paper_realization_date?: string,
-    paper_interviewer?: string, last_finalization_date?: string, external_id?: string, variables?: any) {
+    paper_interviewer?: string, last_finalization_date?: string, external_id?: string, type?: string, variables?: any) {
     this.activityId = id
     this.acronym = acronym
     this.version = version
@@ -42,6 +42,7 @@ class ActivityExtractions {
     this.paper_interviewer = paper_interviewer
     this.last_finalization_date = last_finalization_date
     this.external_id = external_id
+    this.type = type
     this.variables = variables
   }
 
@@ -49,7 +50,7 @@ class ActivityExtractions {
     let extractions: any = new ActivityExtractions();
     for (let index in items) {
       if (extractions.hasOwnProperty(index)) {
-        extractions[index] = items[index]; 
+        extractions[index] = items[index];
       }
     }
     return extractions;
