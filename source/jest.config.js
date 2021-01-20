@@ -19,5 +19,9 @@ module.exports = {
     "!**/*.{spec.ts,test.ts,d.ts,js}"
   ],
   coverageDirectory: "./coverage",
+  // The paths to modules that run some code to configure or set up the testing environment before each test
+  setupFiles: [
+    "./test/setup.test.ts"
+  ],
   verbose: true
 };
