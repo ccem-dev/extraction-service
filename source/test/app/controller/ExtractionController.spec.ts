@@ -38,9 +38,31 @@ describe('ExtractionController.ts Tests', () => {
 
   })
 
+  it("createMethod return values activity rejects", async () => {
+    req.body = data.extractionsActivityAll
+    mockActivity.create = jest.fn()
+    const spy = jest.spyOn(mockActivity, 'create').mockRejectedValue(false)
+    await ExtractionController.create(req, res)
+
+    expect(spy).toHaveBeenCalled()
+
+    spy.mockRestore();
+
+  })
+
   it("removeMethod return values extraction activity", async () => {
     mockActivity.remove = jest.fn()
     const spy = jest.spyOn(mockActivity, 'remove').mockResolvedValue(true)
+
+    await ExtractionController.remove(req, res)
+    expect(spy).toHaveBeenCalled()
+
+    spy.mockRestore();
+  })
+
+  it("removeMethod return values extraction activity rejects", async () => {
+    mockActivity.remove = jest.fn()
+    const spy = jest.spyOn(mockActivity, 'remove').mockRejectedValue(false)
 
     await ExtractionController.remove(req, res)
     expect(spy).toHaveBeenCalled()

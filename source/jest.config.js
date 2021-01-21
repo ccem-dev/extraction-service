@@ -16,6 +16,8 @@ module.exports = {
   collectCoverage: true,
   collectCoverageFrom: [
     "**/**/**.ts",
+    "!**/**/Routers.ts",
+    "!**/config/init/**.ts",
     "!**/*.{spec.ts,test.ts,d.ts,js}"
   ],
   coverageDirectory: "./coverage",
