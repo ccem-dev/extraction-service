@@ -1,7 +1,3 @@
-interface Dic {
-  [key: string]: any;
-}
-
 class ActivityExtractions {
   private activityId?: string;
   private acronym?: string;
@@ -20,12 +16,12 @@ class ActivityExtractions {
   private paper_interviewer?: string
   private last_finalization_date?: string
   private external_id?: string
-  private variables?: Dic
+  private variables?: any[]
 
   constructor(id?: string, acronym?: string, version?: number, recruitmentNumber?: string,
     participant_field_center?: string, mode?: string, category?: string, participant_field_center_by_activity?: string,
     interviewer?: string, current_status?: string, current_status_date?: string, creation_date?: string, paper_realization_date?: string,
-    paper_interviewer?: string, last_finalization_date?: string, external_id?: string, type?: string, variables?: any) {
+    paper_interviewer?: string, last_finalization_date?: string, external_id?: string, type?: string, variables?: any[]) {
     this.activityId = id
     this.acronym = acronym
     this.version = version
