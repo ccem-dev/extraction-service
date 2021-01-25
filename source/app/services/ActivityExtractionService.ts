@@ -52,7 +52,7 @@ class ActivityExtrationService {
       });
       return new SuccessResponse();
     } catch (e) {
-      if (e && e.meta && e.meta.body.result == 'not_found') {
+      if (e && e.meta && e.meta.statusCode == '404') {
         console.info(e.meta.body);
         return new NotFoundResponse();
       }
@@ -79,13 +79,15 @@ class ActivityExtrationService {
   }
 
   private async dictionaryCustomIdAndValue(activityFillingList: any, activityNavigationTrackerItems: any, surveyItemContainer: any) {
-    let answerAllQuestions: any[] = []
+    let answerAllQuestions: any = {}
     let answerQuestions: any[]
 
     if (surveyItemContainer.length != 0) {
       surveyItemContainer.forEach((question: any) => {
         answerQuestions = this.extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
-        answerAllQuestions = answerAllQuestions.concat(answerQuestions)
+        answerQuestions.forEach((items: any) => {
+          Object.assign(answerAllQuestions, items);
+        })
       })
     }
 
