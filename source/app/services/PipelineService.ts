@@ -1,19 +1,24 @@
 import IResponse, {NotFoundResponse, SuccessResponse} from '../utils/response';
 import ElasticsearchService from "./ElasticsearchService";
+import RscriptService from "./RscriptService";
 import CsvService from "./CsvService";
 
+const json2csv = require('json-2-csv').json2csvAsync;
 const axios = require('axios').default;
 
-const EXTRACTIONS_INDEX = 'extractions_';
+const EXTRACTIONS_INDEX = 'extractions_survey_'; // pegar do ActivityExtractionService
 
 class PipelineService {
 
   constructor() {
   }
 
-  async performAsJson (surveyId: string, Rscript: string): Promise<IResponse> {
+  async performRscript (surveyId: string, Rscript: string, controllFields: string[]): Promise<IResponse> {
     try {
-      let result = await findPipelineAndApplyFunction(surveyId, Rscript, "json");
+      let result = await findPipelineAndApplyFunction(surveyId, Rscript, controllFields);
+      if(typeof result == 'string'){
+        result = await CsvService.createCsvFromString(result);
+      }
       return new SuccessResponse(result);
     }
     catch (e) {
@@ -22,24 +27,26 @@ class PipelineService {
     }
   }
 
-  async performScriptAsCsv (surveyId: string, Rscript: string): Promise<IResponse> {
+  async performAsJson (surveyId: string, controllFields: string[]): Promise<IResponse> {
+    console.log('\nextract from pipeline of survey id' + surveyId + ' as json');//.TODO
     try {
-      let result = await findPipelineAndApplyFunction(surveyId, Rscript, "csv");
-      // return new SuccessResponse(await CsvService.createCsvFromString(result));
-
-      return new SuccessResponse(result);
+      let response = await findPipelineAndApplyFunction(surveyId, null, controllFields);
+      return new SuccessResponse(response);
     }
     catch (e) {
+      console.log(e)
       return new NotFoundResponse(e);
     }
   }
 
-  async performAsCsv (surveyId: string, Rscript: string): Promise<IResponse> {
+  async performAsCsv (surveyId: string, controllFields: string[]): Promise<IResponse> {
+    console.log('\nextract from pipeline of survey id' + surveyId + ' as csv');//.TODO
     try {
-      let result = await findPipelineAndApplyFunction(surveyId, getDefaultRscriptPath(), "csv");
-      // return new SuccessResponse(await CsvService.createCsvFromString(result));
-      // console.log(result)
-      return new SuccessResponse(result);
+      let response = await findPipelineAndApplyFunction(surveyId, null, controllFields);
+      response = await json2csv(response, {delimiter: { field: CsvService.getDelimiter() }});
+      // return new SuccessResponse(await CsvService.createCsvFromString(response));
+      // console.log(response)
+      return new SuccessResponse(response);
     }
     catch (e) {
       return new NotFoundResponse(e);
@@ -48,10 +55,9 @@ class PipelineService {
 
 }
 
-async function findPipelineAndApplyFunction(surveyId: string, RscriptPath: string,  returnType: string) {
-  console.log('\nextract from pipeline of survey id' + surveyId + ' as ' + returnType);
+async function findPipelineAndApplyFunction(surveyId: string, RscriptName: string,  controllFields: string[]) {
   console.log('surveyId:', surveyId)
-  console.log('Rscript path:', RscriptPath.replace(process.cwd(), "."))
+  console.log('Rscript name:', RscriptName)
 
   //TODO hard coded
   const size = 5;
@@ -60,13 +66,15 @@ async function findPipelineAndApplyFunction(surveyId: string, RscriptPath: strin
   const indexName = EXTRACTIONS_INDEX + surveyId;
 
   let response : any[] = [];
-  let body = await firstSearch(indexName, size, scrollTime);
+  let body = await firstSearch(indexName, size, scrollTime, controllFields);
+
+  // ["recruitment_number", "activityId"]
 
   console.log('total:', body.hits.total.value)//TODO remove
-  let counter = 1;//TODO remove
+  let counter = 0;//TODO remove
 
   while(body.hits && (body.hits.hits.length) && response.length < 10) {
-    console.log(`search #${counter++}: ${body.hits.hits.length} docs`)//TODO remove
+    console.log(`search #${++counter}: ${body.hits.hits.length} docs`)//TODO remove
 
     // @ts-ignore
     response = response.concat(body.hits.hits.map((hit: {_source: any}) => {
@@ -79,30 +87,33 @@ async function findPipelineAndApplyFunction(surveyId: string, RscriptPath: strin
   }
 
   console.log('extraction finalized');
-  console.log('running R script on results ...');
 
-  // let result = R(RscriptPath).data(response).callSync();
-
-  // console.log('done!');
-  // console.log('R result:', result);
-  return true;
+  if(!RscriptName){
+    return response;
+  }
+  return applyRscriptToResponse(RscriptName, response);
 }
 
-async function firstSearch(indexName: string, size: number, scrollTime: string) : Promise<any>{
+async function firstSearch(indexName: string, size: number, scrollTime: string, controllFields: string[]) : Promise<any>{
+  const searchBody: any = {
+    query: {
+      "match_all": {}
+    },
+    sort: {
+      activityId: "asc"
+    },
+    _source: true
+  };
+  if(controllFields){
+    searchBody.fields = controllFields;
+  }
+
   const { body } = await ElasticsearchService.getClient().search({
     index: indexName,
     type: '_doc',
     size: size,
     scroll: scrollTime,
-    body: {
-      query: {
-        "match_all": {}
-      },
-      sort: {
-        activityId: "asc"
-      },
-      _source: true
-    }
+    body: searchBody
   });
   return body;
 }
@@ -115,10 +126,34 @@ async function searchMore(scrollId: string, strollTime: string) : Promise<any>{
   return body;
 }
 
+async function applyRscriptToResponse(RscriptName: string,  response: any[]) {
+  //TODO hard coded
+  const MAX_CONTENT_LENGTH = 200000000;
+  const MAX_BODY_LENGTH = 1000000000;
+  const PLUMBER_RUNNER_URL = "http://127.0.0.1:8000/runner";
 
-function getDefaultRscriptPath() {
-  //TODO
-  return "function(x) {return(x)}";
+  const rscript = (await RscriptService.get(RscriptName)).body;
+  if(!rscript.script){
+    throw 'R script ' + RscriptName + ' was not found';
+  }
+
+  console.log('running R script on results ...');//.TODO
+
+  const resp = await axios({
+    method: 'post',
+    url: PLUMBER_RUNNER_URL,
+    data: {
+      "script": rscript.script,
+      "arg": response
+    },
+    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+    maxContentLength: MAX_CONTENT_LENGTH,
+    maxBodyLength: MAX_BODY_LENGTH
+  }).catch((err: any) => {
+    throw err;
+  });
+  console.log("R script response:", resp.data.length);//.TODO
+  return resp.data;
 }
 
 
