@@ -13,13 +13,14 @@ class PipelineService {
   constructor() {
   }
 
-  async performRscript (surveyId: string, Rscript: string, controllFields: string[]): Promise<IResponse> {
+  async performRscript (surveyId: string, RscriptName: string, controllFields: string[]): Promise<IResponse> {
     try {
-      let result = await findPipelineAndApplyFunction(surveyId, Rscript, controllFields);
-      if(typeof result == 'string'){
-        result = await CsvService.createCsvFromString(result);
+      let response = await findSurveyExtractions(surveyId, controllFields);
+      response = await applyRscriptToResponse(RscriptName, response);
+      if(typeof response == 'string'){
+        return new SuccessResponse(await CsvService.createCsvFromString(response));
       }
-      return new SuccessResponse(result);
+      return new SuccessResponse(response);
     }
     catch (e) {
       console.log(e)
@@ -30,8 +31,7 @@ class PipelineService {
   async performAsJson (surveyId: string, controllFields: string[]): Promise<IResponse> {
     console.log('\nextract from pipeline of survey id' + surveyId + ' as json');//.TODO
     try {
-      let response = await findPipelineAndApplyFunction(surveyId, null, controllFields);
-      return new SuccessResponse(response);
+      return new SuccessResponse(await findSurveyExtractions(surveyId, controllFields));
     }
     catch (e) {
       console.log(e)
@@ -42,11 +42,9 @@ class PipelineService {
   async performAsCsv (surveyId: string, controllFields: string[]): Promise<IResponse> {
     console.log('\nextract from pipeline of survey id' + surveyId + ' as csv');//.TODO
     try {
-      let response = await findPipelineAndApplyFunction(surveyId, null, controllFields);
-      response = await json2csv(response, {delimiter: { field: CsvService.getDelimiter() }});
-      // return new SuccessResponse(await CsvService.createCsvFromString(response));
-      // console.log(response)
-      return new SuccessResponse(response);
+      let response = await json2csv(await findSurveyExtractions(surveyId, controllFields),
+        {delimiter: { field: CsvService.getDelimiter() }});
+      return new SuccessResponse(await CsvService.createCsvFromString(response));
     }
     catch (e) {
       return new NotFoundResponse(e);
@@ -55,25 +53,23 @@ class PipelineService {
 
 }
 
-async function findPipelineAndApplyFunction(surveyId: string, RscriptName: string,  controllFields: string[]) {
+async function findSurveyExtractions(surveyId: string, controllFields: string[]) {
   console.log('surveyId:', surveyId)
-  console.log('Rscript name:', RscriptName)
 
   //TODO hard coded
-  const size = 5;
+  const size = 10000;
   const scrollTime = "1m";
 
   const indexName = EXTRACTIONS_INDEX + surveyId;
+  console.log('index', indexName)
 
   let response : any[] = [];
   let body = await firstSearch(indexName, size, scrollTime, controllFields);
 
-  // ["recruitment_number", "activityId"]
-
   console.log('total:', body.hits.total.value)//TODO remove
   let counter = 0;//TODO remove
 
-  while(body.hits && (body.hits.hits.length) && response.length < 10) {
+  while(body.hits && (body.hits.hits.length)) {
     console.log(`search #${++counter}: ${body.hits.hits.length} docs`)//TODO remove
 
     // @ts-ignore
@@ -87,33 +83,21 @@ async function findPipelineAndApplyFunction(surveyId: string, RscriptName: strin
   }
 
   console.log('extraction finalized');
-
-  if(!RscriptName){
-    return response;
-  }
-  return applyRscriptToResponse(RscriptName, response);
+  return response;
 }
 
 async function firstSearch(indexName: string, size: number, scrollTime: string, controllFields: string[]) : Promise<any>{
-  const searchBody: any = {
-    query: {
-      "match_all": {}
-    },
-    sort: {
-      activityId: "asc"
-    },
-    _source: true
-  };
-  if(controllFields){
-    searchBody.fields = controllFields;
-  }
-
   const { body } = await ElasticsearchService.getClient().search({
     index: indexName,
     type: '_doc',
     size: size,
     scroll: scrollTime,
-    body: searchBody
+    body: {
+      query: {
+        "match_all": {}
+      },
+      _source: true
+    }
   });
   return body;
 }
@@ -137,6 +121,7 @@ async function applyRscriptToResponse(RscriptName: string,  response: any[]) {
     throw 'R script ' + RscriptName + ' was not found';
   }
 
+  console.log('Rscript name:', RscriptName)
   console.log('running R script on results ...');//.TODO
 
   const resp = await axios({
