@@ -7,6 +7,10 @@ class CsvService {
   constructor() {
   }
 
+  getDelimiter(): string {
+    return DELIMITER;
+  }
+
   async createCsv(content: any[]) : Promise<Object> {
     let csvContent = await json2csvAsync(content, {
       delimiter: {
@@ -38,6 +42,7 @@ class CsvService {
       values: values
     }
   }
+
 }
 
 export default new CsvService();
