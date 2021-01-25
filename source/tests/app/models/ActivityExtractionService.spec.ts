@@ -21,6 +21,7 @@ describe('ActivityExtractionFactory.ts Tests', () => {
 
   it("toJsonObjectMethod must convert the values ​​to a object", async () => {
     let activityObj: object = extraction.toJsonObject()
+    console.log(activityObj)
     expect(activityObj).toBeInstanceOf(Object)
   })
 
@@ -93,11 +94,18 @@ describe('ActivityExtractionFactory.ts Tests', () => {
   })
 
   it("setVariablesMethod should attribute values and getVariablesMethod should return the values ​​in version", async () => {
-    let variables = [{
-      customId: "ACTDC7",
-      value: "32"
-    }]
+    // let variables = [{
+    //   customId: "ACTDC7",
+    //   value: "32"
+    // }]
+
+    let variables = {
+      "ACTDC7": "32"
+    };
+
     extraction.setVariables(variables )
+
+    console.log(extraction.toJsonObject())
 
     expect(extraction.getVariables()).toEqual(variables)
   })
