@@ -34,7 +34,7 @@ class PipelineService {
     }
   }
 
-  async performAsCsv (surveyId: string): Promise<IResponse> {
+  async performAsCsv (surveyId: string, Rscript: string): Promise<IResponse> {
     try {
       let result = await findPipelineAndApplyFunction(surveyId, getDefaultRscriptPath(), "csv");
       // return new SuccessResponse(await CsvService.createCsvFromString(result));
@@ -83,9 +83,9 @@ async function findPipelineAndApplyFunction(surveyId: string, RscriptPath: strin
 
   // let result = R(RscriptPath).data(response).callSync();
 
-  console.log('done!');
-  console.log('R result:', result);
-  return result;
+  // console.log('done!');
+  // console.log('R result:', result);
+  return true;
 }
 
 async function firstSearch(indexName: string, size: number, scrollTime: string) : Promise<any>{
