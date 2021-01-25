@@ -1,44 +1,45 @@
 import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response';
-import ActivityEnum from "../enum/activityEnum"
-import ElasticsearchService from "./ElasticsearchService"
-import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
+import ActivityEnum from "../enum/activityEnum";
+import ElasticsearchService from "./ElasticsearchService";
+import ActivityExtractions from "../models/activity/ActivityExtractionFactory";
 
 class ActivityExtrationService {
-  private extractionOid: string
+  private extractionOid: string;
 
   constructor() {
-    this.extractionOid = "extractions_"
+    this.extractionOid = "extractions_survey_";
   }
 
   async create(extractions: any): Promise<IResponse> {
-    let activityFillingList: any[]
-    let activityNavigationTrackerItemsSkipped: any[]
-    let surveyItemContainer: any[]
-    let surveyId: string
-    let dictionary: any
+    let activityFillingList: any[];
+    let activityNavigationTrackerItemsSkipped: any[];
+    let surveyItemContainer: any[];
+    let surveyId: string;
+    let dictionary: any;
 
     try {
-      if (extractions.activity) {
-        let extraction: ActivityExtractions = ActivityExtractions.fromJson(extractions.activity);
-        activityFillingList = extractions.activity.fillingList
-        activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems
-
-        if (extractions.survey && extractions.survey.itemContainer) {
-          surveyItemContainer = extractions.survey.itemContainer
-          surveyId = extractions.survey.id
-          dictionary = await this.dictionaryCustomIdAndValue(activityFillingList, activityNavigationTrackerItemsSkipped, surveyItemContainer)
-          extraction.setVariables(dictionary)
-
-          await this.createExtraction(surveyId, extraction)
-        }
-      } else {
-        throw new NotFoundResponse({ message: "Activity not found" })
+      if (!extractions.activity) {
+        return new NotFoundResponse({ message: "Activity not found" });
       }
 
-      return new SuccessResponse()
+      let extraction: ActivityExtractions = ActivityExtractions.fromJson(extractions.activity);
+      activityFillingList = extractions.activity.fillingList;
+      activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems;
+
+      if (!extractions.survey || !extractions.survey.itemContainer) {
+        return new NotFoundResponse({ message: "Activity not found" });
+      }
+
+      surveyItemContainer = extractions.survey.itemContainer;
+      surveyId = extractions.survey.id;
+      dictionary = await this.dictionaryCustomIdAndValue(activityFillingList, activityNavigationTrackerItemsSkipped, surveyItemContainer);
+      extraction.setVariables(dictionary);
+
+      await this.createExtraction(surveyId, extraction);
+      return new SuccessResponse();
     } catch (e) {
       console.error(e)
-      throw new InternalServerErrorResponse(e)
+      return new InternalServerErrorResponse(e)
     }
   }
 
@@ -49,16 +50,14 @@ class ActivityExtrationService {
         id: activityId,
         refresh: true
       });
-
-      return new SuccessResponse()
+      return new SuccessResponse();
     } catch (e) {
       if (e && e.meta && e.meta.body.result == 'not_found') {
-        console.info(e.meta.body)
-        throw new NotFoundResponse()
-      } else {
-        console.error(e)
-        throw new InternalServerErrorResponse(e)
+        console.info(e.meta.body);
+        return new NotFoundResponse();
       }
+      console.error(e)
+      return new InternalServerErrorResponse(e)
     }
   }
 
@@ -121,16 +120,16 @@ class ActivityExtrationService {
     return singleSelectioExtractionValue
   }
 
-  private attributeQuestion(customID: string, answerValue: any, metadataValue: string, commentValue: string, option: boolean): any[] {
-    let answerData: any[] = []
+  private attributeQuestion(customId: string, answerValue: any, metadataValue: string, commentValue: string, option: boolean): any[] {
+    let answerData: any[] = [];
     if (option) {
-      answerData.push({ customId: customID, value: answerValue ? answerValue.toString() : '' })
+      answerData.push({ [customId]: answerValue ? answerValue.toString() : '' });
     }
 
-    answerData.push({ customId: customID + ActivityEnum.QUESTION_METADATA, value: metadataValue ? metadataValue : '' })
-    answerData.push({ customId: customID + ActivityEnum.QUESTION_COMMENT, value: commentValue ? commentValue : '' })
+    answerData.push({ [customId + ActivityEnum.QUESTION_METADATA]: metadataValue ? metadataValue : '' });
+    answerData.push({ [customId + ActivityEnum.QUESTION_COMMENT]: commentValue ? commentValue : '' });
 
-    return answerData
+    return answerData;
   }
 
   private extractionAnswerCustomID(activityFillingList: any, activityNavigationTrackerItems: any, question: any): any {
@@ -196,14 +195,14 @@ class ActivityExtrationService {
         if (questionFill && questionFill.answer.value) {
           questionItems = questionFill.answer.value.map((items: any) => {
             return {
-              customId: items.option, value: items.state ? '1' : '0'
+              [items.option]: items.state ? '1' : '0'
             }
           })
         } else if (question.options) {
           questionItems = question.options.map((option: any) => {
             if (option.customOptionID) {
               return {
-                customId: option.customOptionID, value: ''
+                [option.customOptionID]: ''
               }
             }
           })
@@ -217,7 +216,7 @@ class ActivityExtrationService {
           questionFill.answer.value.forEach((item: any) => {
             questionItems = item.map((items: any) => {
               return {
-                customId: items.gridText, value: items.value ? items.value : ''
+                [items.gridText]: items.value ? items.value : ''
               }
             })
           })
@@ -226,7 +225,7 @@ class ActivityExtrationService {
             questionItems = line.gridTextList.map((items: any) => {
               if (items) {
                 return {
-                  customId: items.customID, value: ''
+                  [items.customID]: ''
                 }
               }
             })
@@ -241,7 +240,7 @@ class ActivityExtrationService {
           questionFill.answer.value.forEach((item: any) => {
             questionItems = item.map((items: any) => {
               return {
-                customId: items.customID, value: items.value ? items.value.toString() : ''
+                [items.customID]: items.value ? items.value.toString() : ''
               }
             })
           })
@@ -250,7 +249,7 @@ class ActivityExtrationService {
             questionItems = line.gridIntegerList.map((items: any) => {
               if (items) {
                 return {
-                  customId: items.customID, value: ''
+                  [items.customID]: ''
                 }
               }
             })
