@@ -17,15 +17,10 @@ RUN Rscript -e 'install.packages("devtools",dependencies=TRUE, repos = "http://c
 RUN Rscript -e 'install.packages("rjson",dependencies=TRUE, repos = "http://cran.us.r-project.org")'
 COPY source/dist/. src/
 WORKDIR /src
+ENV MEMORY 1024
 ENV API_PORT 8080
-ENV DATABASE_HOSTNAME otus-database
-ENV DATABASE_PORT 27017
-ENV DATABASE_USER otus
-ENV DATABASE_PASS otus
-ENV DATABASE otus
-ENV ELASTICSEARCH_PROTOCOL ELASTICSEARCH_PROTOCOL
-ENV ELASTICSEARCH_HOSTNAME ELASTICSEARCH_HOSTNAME
+ENV ELASTICSEARCH_HOSTNAME elasticsearch
 ENV ELASTICSEARCH_PORT 9200
+ENV ELASTICSEARCH_PROTOCOL ELASTICSEARCH_PROTOCOL
 ENV ELASTICSEARCH_INITIALIZE ELASTICSEARCH_INITIALIZE
-ENV NODE_OPTIONS --max_old_space_size=1024
 CMD node --max-old-space-size=$MEMORY --optimize-for-size --inspect config/init/server.js
