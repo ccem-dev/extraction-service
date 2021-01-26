@@ -25,21 +25,22 @@ describe('ActivityExtractionService.ts Tests', () => {
 
   it("createExtractionMethod create values extraction", async () => {
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
-    await expect(ActivityExtractionService.create(extractionData)).resolves.toEqual({ "body": { "data": true }, "code": 200 });
+    await expect(ActivityExtractionService.create(extractionData)).resolves.toEqual(new SuccessResponse());
     expect(spyExtraction).toHaveBeenCalled()
     spyExtraction.mockRestore();
   })
 
   it("createExtractionMethod create values extraction question All and null navigationTracking", async () => {
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
-    await expect(ActivityExtractionService.create(extractionActivityAllData)).resolves.toEqual({ "body": { "data": true }, "code": 200 });
+    await expect(ActivityExtractionService.create(extractionActivityAllData)).resolves.toEqual(new SuccessResponse());
     expect(spyExtraction).toHaveBeenCalled()
     spyExtraction.mockRestore();
   })
 
   it("createExtractionMethod create values extraction activity undefined", async () => {
+    ACTIVITY = { activity: null };
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
-    await expect(ActivityExtractionService.create(ACTIVITY)).rejects.toEqual({ "body": { "data": { "body": { "data": { "message": "Activity not found" } }, "code": 404 } }, "code": 500 });
+    await expect(ActivityExtractionService.create(ACTIVITY)).resolves.toEqual({ "body": { "data": { "message": "Activity not found" } }, "code": 404 });
     expect(spyExtraction).not.toHaveBeenCalled()
     spyExtraction.mockRestore();
   })
@@ -48,7 +49,7 @@ describe('ActivityExtractionService.ts Tests', () => {
     Mockclient.update = function () { return Promise.reject() }
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 
-    await expect(ActivityExtractionService.create(extractionActivityAllData)).rejects.toEqual(new InternalServerErrorResponse(Error()))
+    await expect(ActivityExtractionService.create(extractionActivityAllData)).resolves.toEqual(new InternalServerErrorResponse(Error()))
     expect(spyExtraction).toHaveBeenCalled()
 
     spyExtraction.mockRestore();
@@ -57,17 +58,17 @@ describe('ActivityExtractionService.ts Tests', () => {
   it("removeMethod return values extraction activity", async () => {
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 
-    await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual({ "body": { "data": true }, "code": 200 })
+    await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new SuccessResponse())
     expect(spyExtraction).toHaveBeenCalled()
 
     spyExtraction.mockRestore();
   })
 
   it("removeMethod return values extraction throw data not found", async () => {
-    Mockclient.delete = function () { return Promise.reject({ meta: { body: { result: "not_found" } } }) }
+    Mockclient.delete = function () { return Promise.reject({ meta: { statusCode: '404' } }) }
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 
-    await expect(ActivityExtractionService.remove(surveyId, activityId)).rejects.toEqual(new NotFoundResponse())
+    await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new NotFoundResponse())
     expect(spyExtraction).toHaveBeenCalled()
 
     spyExtraction.mockRestore();
@@ -77,7 +78,7 @@ describe('ActivityExtractionService.ts Tests', () => {
     Mockclient.delete = function () { return Promise.reject() }
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 
-    await expect(ActivityExtractionService.remove(surveyId, activityId)).rejects.toEqual(new InternalServerErrorResponse())
+    await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new InternalServerErrorResponse())
     expect(spyExtraction).toHaveBeenCalled()
 
     spyExtraction.mockRestore();

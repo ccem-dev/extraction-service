@@ -18,7 +18,7 @@ data.activity = {
   "paper_interviewer": "",
   "last_finalization_date": "2020-12-18T16:55:55.511",
   "external_id": "123",
-  "fillingList": [
+  "fillingList": JSON.stringify( [
     {
       "objectType": "QuestionFill",
       "questionID": "ACTDC1",
@@ -104,7 +104,7 @@ data.activity = {
       },
       "comment": ""
     }
-  ],
+  ]),
   "navigationTrackingItems": [
     {
       "objectType": "NavigationTrackingItem",
@@ -1617,7 +1617,7 @@ data.activity = {
       "paper_interviewer": "",
       "last_finalization_date": "2020-12-18T16:55:55.511",
       "external_id": "123",
-      "fillingList": [
+      "fillingList": JSON.stringify([
         {
           "objectType": "QuestionFill",
           "questionID": "ALL1",
@@ -1894,7 +1894,7 @@ data.activity = {
           },
           "comment": ""
         }
-      ],
+      ]),
       "navigationTrackingItems": []
     },
     survey: {

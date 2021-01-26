@@ -1,42 +1,42 @@
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response';
-import ActivityEnum from "../enum/activityEnum";
-import ElasticsearchService from "./ElasticsearchService";
-import ActivityExtractions from "../models/activity/ActivityExtractionFactory";
+import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response'
+import ActivityEnum from "../enum/activityEnum"
+import ElasticsearchService from "./ElasticsearchService"
+import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
 
 class ActivityExtrationService {
-  private extractionOid: string;
+  private extractionOid: string
 
   constructor() {
-    this.extractionOid = "extractions_survey_";
+    this.extractionOid = "extractions_survey_"
   }
 
   async create(extractions: any): Promise<IResponse> {
-    let activityFillingList: any[];
-    let activityNavigationTrackerItemsSkipped: any[];
-    let surveyItemContainer: any[];
-    let surveyId: string;
-    let dictionary: any;
+    let activityFillingList: any[]
+    let activityNavigationTrackerItemsSkipped: any[]
+    let surveyItemContainer: any[]
+    let surveyId: string
+    let dictionary: any
 
     try {
       if (!extractions.activity) {
-        return new NotFoundResponse({ message: "Activity not found" });
+        return new NotFoundResponse({ message: "Activity not found" })
       }
 
-      let extraction: ActivityExtractions = ActivityExtractions.fromJson(extractions.activity);
-      activityFillingList = extractions.activity.fillingList;
-      activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems;
+      let extraction: ActivityExtractions = ActivityExtractions.fromJson(extractions.activity)
+      activityFillingList = this.jsonObject(extractions.activity.fillingList)
+      activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems
 
-      if (!extractions.survey || !extractions.survey.itemContainer) {
-        return new NotFoundResponse({ message: "Activity not found" });
+      if (!extractions.survey && !extractions.survey.itemContainer) {
+        return new NotFoundResponse({ message: "Survey not found" })
       }
 
-      surveyItemContainer = extractions.survey.itemContainer;
-      surveyId = extractions.survey.id;
-      dictionary = await this.dictionaryCustomIdAndValue(activityFillingList, activityNavigationTrackerItemsSkipped, surveyItemContainer);
-      extraction.setVariables(dictionary);
+      surveyItemContainer = extractions.survey.itemContainer
+      surveyId = extractions.survey.id
+      dictionary = await this.dictionaryCustomIdAndValue(activityFillingList, activityNavigationTrackerItemsSkipped, surveyItemContainer)
+      extraction.setVariables(dictionary)
 
-      await this.createExtraction(surveyId, extraction);
-      return new SuccessResponse();
+      await this.createExtraction(surveyId, extraction)
+      return new SuccessResponse()
     } catch (e) {
       console.error(e)
       return new InternalServerErrorResponse(e)
@@ -49,12 +49,12 @@ class ActivityExtrationService {
         index: this.extractionOid + surveyId,
         id: activityId,
         refresh: true
-      });
-      return new SuccessResponse();
+      })
+      return new SuccessResponse()
     } catch (e) {
       if (e && e.meta && e.meta.statusCode == '404') {
-        console.info(e.meta.body);
-        return new NotFoundResponse();
+        console.info(e.meta.body)
+        return new NotFoundResponse()
       }
       console.error(e)
       return new InternalServerErrorResponse(e)
@@ -85,13 +85,19 @@ class ActivityExtrationService {
     if (surveyItemContainer.length != 0) {
       surveyItemContainer.forEach((question: any) => {
         answerQuestions = this.extractionAnswerCustomID(activityFillingList, activityNavigationTrackerItems, question)
-        answerQuestions.forEach((items: any) => {
-          Object.assign(answerAllQuestions, items);
-        })
+        if (answerQuestions.length != 0) {
+          answerQuestions.forEach((items: any) => {
+            Object.assign(answerAllQuestions, items)
+          })
+        }
       })
     }
 
     return answerAllQuestions
+  }
+
+  private jsonObject(item: any) {
+    return item ? JSON.parse(item) : null
   }
 
   private metadataOptions(value: string, question: any): string {
@@ -123,15 +129,15 @@ class ActivityExtrationService {
   }
 
   private attributeQuestion(customId: string, answerValue: any, metadataValue: string, commentValue: string, option: boolean): any[] {
-    let answerData: any[] = [];
+    let answerData: any[] = []
     if (option) {
-      answerData.push({ [customId]: answerValue ? answerValue.toString() : '' });
+      answerData.push({ [customId]: answerValue ? answerValue.toString() : '' })
     }
 
-    answerData.push({ [customId + ActivityEnum.QUESTION_METADATA]: metadataValue ? metadataValue : '' });
-    answerData.push({ [customId + ActivityEnum.QUESTION_COMMENT]: commentValue ? commentValue : '' });
+    answerData.push({ [customId + ActivityEnum.QUESTION_METADATA]: metadataValue ? metadataValue : '' })
+    answerData.push({ [customId + ActivityEnum.QUESTION_COMMENT]: commentValue ? commentValue : '' })
 
-    return answerData;
+    return answerData
   }
 
   private extractionAnswerCustomID(activityFillingList: any, activityNavigationTrackerItems: any, question: any): any {
@@ -167,7 +173,7 @@ class ActivityExtrationService {
           questionComment = questionFill.comment
         }
         questionItems = this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer)
-        break;
+        break
       }
       case ActivityEnum.SINGLE_SELECTION_QUESTION: {
         if (questionFill) {
@@ -175,7 +181,7 @@ class ActivityExtrationService {
           questionComment = questionFill.comment
         }
         questionItems = this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer)
-        break;
+        break
       }
       case ActivityEnum.FILE_UPLOAD_QUESTION: {
         let fileName: string = ''
@@ -190,7 +196,7 @@ class ActivityExtrationService {
           questionComment = questionFill.comment
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, fileName, metadataQuestion, questionComment, optionAnswer))
-        break;
+        break
       }
       case ActivityEnum.CHECKBOX_QUESTION: {
         optionAnswer = false
@@ -210,7 +216,7 @@ class ActivityExtrationService {
           })
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
-        break;
+        break
       }
       case ActivityEnum.GRID_TEXT_QUESTION: {
         optionAnswer = false
@@ -234,7 +240,7 @@ class ActivityExtrationService {
           })
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
-        break;
+        break
       }
       case ActivityEnum.GRID_INTEGER_QUESTION: {
         optionAnswer = false
@@ -258,13 +264,13 @@ class ActivityExtrationService {
           })
         }
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
-        break;
+        break
       }
       case ActivityEnum.TEXT_ITEM: {
-        break;
+        break
       }
       case ActivityEnum.IMAGE_ITEM: {
-        break;
+        break
       }
       default: {
         if (questionFill) {
@@ -272,7 +278,7 @@ class ActivityExtrationService {
           questionComment = questionFill.comment
         }
         questionItems = this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer)
-        break;
+        break
       }
     }
     return questionItems
@@ -296,6 +302,6 @@ class ActivityExtrationService {
     }
   }
 
-};
+}
 
 export default new ActivityExtrationService()
