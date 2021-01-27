@@ -1,7 +1,7 @@
 import IResponse, {NotFoundResponse, SuccessResponse} from '../utils/response';
 import ElasticsearchService from "./ElasticsearchService";
 import RscriptService from "./RscriptService";
-import CsvService from "./CsvService";
+import CsvService from "../utils/CsvService";
 
 const json2csv = require('json-2-csv').json2csvAsync;
 const axios = require('axios').default;
