@@ -3,7 +3,7 @@ const SHUTDOWN_TIMEOUT = 10000;
 class ShutdownEventService {
   private subscriptions: {};
 
-  constructor(){
+  constructor() {
     this.subscriptions = {};
     process.on('SIGTERM', this.fireEvent);
     process.on('SIGINT', this.fireEvent);
@@ -14,7 +14,7 @@ class ShutdownEventService {
     this.subscriptions[register] = callback;
   }
 
-  fireEvent () {
+  fireEvent() {
     console.log('Received kill signal, shutting down gracefully');
 
     let promises = Object.values(this.subscriptions).map(sub => {

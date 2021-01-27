@@ -1,4 +1,4 @@
-import {Client} from '@elastic/elasticsearch';
+import { Client } from '@elastic/elasticsearch';
 import ShutdownEventService from '../utils/ShutdownEventService';
 
 const CLIENT_URL = process.env.ELASTICSEARCH_PROTOCOL + '://' + process.env.ELASTICSEARCH_HOSTNAME + ":" + process.env.ELASTICSEARCH_PORT;
@@ -36,7 +36,7 @@ class ElasticsearchService {
 
   private createClient() {
     try {
-      this.client = new Client({node: CLIENT_URL});
+      this.client = new Client({ node: CLIENT_URL });
       this.subscribeClientClosing();
       return this.client;
     } catch (e) {

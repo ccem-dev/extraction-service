@@ -9,7 +9,6 @@ export class SuccessResponse implements IResponse {
     this.body = { data: body };
     return this;
   }
-
   body: object;
   code: number;
 }
@@ -20,7 +19,6 @@ export class NotAcceptableResponse implements IResponse {
     this.body = { data: body };
     return this;
   }
-
   body: object;
   code: number;
 }
@@ -31,7 +29,6 @@ export class InternalServerErrorResponse implements IResponse {
     this.body = { data: body };
     return this;
   }
-
   body: object;
   code: number;
 }
@@ -42,7 +39,6 @@ export class NotFoundResponse implements IResponse {
     this.body = { data: body };
     return this;
   }
-
   body: object;
   code: number;
 }
@@ -64,7 +60,6 @@ export class ValidationResponse implements IResponse {
     this.body = { data: body };
     return this;
   }
-
   body: object;
   code: number;
 }
