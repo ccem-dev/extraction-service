@@ -3,15 +3,11 @@ import ActivityEnum from "../enum/activityEnum"
 import ElasticsearchService from "./ElasticsearchService"
 import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
 
-const ACTIVITY_EXTRACTION_INDEX_SUFFIX = "extractions_survey_";
-
 class ActivityExtractionService {
-
-  constructor() {
-  }
+  private readonly ACTIVITY_EXTRACTION_INDEX_SUFFIX = "extractions_survey_";
 
   getIndexName(surveyId: string){
-    return ACTIVITY_EXTRACTION_INDEX_SUFFIX + surveyId;
+    return this.ACTIVITY_EXTRACTION_INDEX_SUFFIX + surveyId;
   }
 
   async create(extractions: any): Promise<IResponse> {
