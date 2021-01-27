@@ -1,5 +1,5 @@
 import ActivityExtractionService from '../../../app/services/ActivityExtractionService'
-import ExtractionController from '../../../app/controllers/ExtractionController'
+import ExtractionController from '../../../app/controllers/ActivityExtractionController'
 
 import data from "../../data/json-importer.test"
 

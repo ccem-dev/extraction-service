@@ -1,5 +1,5 @@
 import request from 'supertest'
-import ExtractionRouter from '../../../app/routes/ExtractionRouter'
+import ExtractionRouter from '../../../app/routes/ActivityExtractionRouter'
 
 describe('ExtractionRouter.ts Tests', () => {
 
