@@ -1,4 +1,4 @@
-import IResponse, { NotFoundResponse, SuccessResponse, AlreadyExistsResponse, ValidationResponse } from "../utils/response";
+import IResponse, { NotFoundResponse, SuccessResponse, ValidationResponse } from "../utils/response";
 import ElasticsearchService from "./ElasticsearchService";
 import Rscript from "../models/rscript/RscriptFactory";
 
