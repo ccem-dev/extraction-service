@@ -1,16 +1,10 @@
-const DEFAULT_NAME = 'default';
-
 class RscriptFactory {
   private name: string;
   private script: string;
 
   constructor(name: string, script: string) {
-    this.name = name || DEFAULT_NAME;
+    this.name = name;
     this.script = script;
-  }
-
-  public static getDefaultName(){
-    return DEFAULT_NAME;
   }
 
   public toJsonString(){
