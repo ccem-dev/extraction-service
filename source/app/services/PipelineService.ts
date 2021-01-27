@@ -6,7 +6,9 @@ import CsvService from "./CsvService";
 const json2csv = require('json-2-csv').json2csvAsync;
 const axios = require('axios').default;
 
-const EXTRACTIONS_INDEX = 'extractions_survey_'; // pegar do ActivityExtractionService
+const EXTRACTIONS_INDEX = 'extractions_survey_'; //TODO pegar do ActivityExtractionService
+const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
+  "/" + process.env.PLUMBER_RUNNER;
 
 class PipelineService {
 
@@ -23,24 +25,20 @@ class PipelineService {
       return new SuccessResponse(response);
     }
     catch (e) {
-      console.log(e)
       return new NotFoundResponse(e);
     }
   }
 
   async performAsJson (surveyId: string, controllFields: string[]): Promise<IResponse> {
-    console.log('\nextract from pipeline of survey id' + surveyId + ' as json');//.TODO
     try {
       return new SuccessResponse(await findSurveyExtractions(surveyId, controllFields));
     }
     catch (e) {
-      console.log(e)
       return new NotFoundResponse(e);
     }
   }
 
   async performAsCsv (surveyId: string, controllFields: string[]): Promise<IResponse> {
-    console.log('\nextract from pipeline of survey id' + surveyId + ' as csv');//.TODO
     try {
       let response = await json2csv(await findSurveyExtractions(surveyId, controllFields),
         {delimiter: { field: CsvService.getDelimiter() }});
@@ -54,35 +52,21 @@ class PipelineService {
 }
 
 async function findSurveyExtractions(surveyId: string, controllFields: string[]) {
-  console.log('surveyId:', surveyId)
-
-  //TODO hard coded
-  const size = 10000;
-  const scrollTime = "1m";
+  const SIZE = 10000;
+  const SCROLL_TIME = "1m";
 
   const indexName = EXTRACTIONS_INDEX + surveyId;
-  console.log('index', indexName)
 
   let response : any[] = [];
-  let body = await firstSearch(indexName, size, scrollTime, controllFields);
-
-  console.log('total:', body.hits.total.value)//TODO remove
-  let counter = 0;//TODO remove
+  let body = await firstSearch(indexName, SIZE, SCROLL_TIME, controllFields);
 
   while(body.hits && (body.hits.hits.length)) {
-    console.log(`search #${++counter}: ${body.hits.hits.length} docs`)//TODO remove
-
     // @ts-ignore
-    response = response.concat(body.hits.hits.map((hit: {_source: any}) => {
-      // console.log(hit._source.activityId, hit._source.variables.length)//, hit._source.variables[227])
-      // hit._source.variables = hit._source.variables.slice(0,226);
-      return hit._source
-    }));
+    response = response.concat(body.hits.hits.map((hit: {_source: any}) => hit._source));
     // @ts-ignore
-    body = await searchMore(body._scroll_id, scrollTime);
+    body = await searchMore(body._scroll_id, SCROLL_TIME);
   }
 
-  console.log('extraction finalized');
   return response;
 }
 
@@ -111,33 +95,23 @@ async function searchMore(scrollId: string, strollTime: string) : Promise<any>{
 }
 
 async function applyRscriptToResponse(RscriptName: string,  response: any[]) {
-  //TODO hard coded
-  const MAX_CONTENT_LENGTH = 200000000;
-  const MAX_BODY_LENGTH = 1000000000;
-  const PLUMBER_RUNNER_URL = "http://127.0.0.1:8000/runner";
-
-  const rscript = (await RscriptService.get(RscriptName)).body;
+  const rscript = (await RscriptService.get(RscriptName)).body.data;
   if(!rscript.script){
     throw 'R script ' + RscriptName + ' was not found';
   }
-
-  console.log('Rscript name:', RscriptName)
-  console.log('running R script on results ...');//.TODO
-
   const resp = await axios({
     method: 'post',
-    url: PLUMBER_RUNNER_URL,
+    url: PLUMBER_URL,
     data: {
       "script": rscript.script,
       "arg": response
     },
     headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-    maxContentLength: MAX_CONTENT_LENGTH,
-    maxBodyLength: MAX_BODY_LENGTH
+    maxContentLength: parseInt(process.env.MAX_CONTENT_LENGTH),
+    maxBodyLength: parseInt(process.env.MAX_BODY_LENGTH)
   }).catch((err: any) => {
     throw err;
   });
-  console.log("R script response:", resp.data.length);//.TODO
   return resp.data;
 }
 
