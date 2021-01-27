@@ -1,6 +1,6 @@
 import IResponse, { NotFoundResponse, SuccessResponse, AlreadyExistsResponse, ValidationResponse } from "../utils/response";
 import ElasticsearchService from "./ElasticsearchService";
-import Rscript from "../model/rscript/RscriptFactory";
+import Rscript from "../models/rscript/RscriptFactory";
 
 const R_SCRIPTS_INDEX = 'rscript';
 
