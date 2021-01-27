@@ -6,10 +6,8 @@ import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
 const ACTIVITY_EXTRACTION_INDEX_SUFFIX = "extractions_survey_";
 
 class ActivityExtrationService {
-  private extractionOid: string;
 
   constructor() {
-    this.extractionOid = ACTIVITY_EXTRACTION_INDEX_SUFFIX;
   }
 
   getIndexName(surveyId: string){
@@ -52,7 +50,7 @@ class ActivityExtrationService {
   async remove(surveyId: string, activityId: string): Promise<IResponse> {
     try {
       await ElasticsearchService.getClient().delete({
-        index: this.extractionOid + surveyId,
+        index:  this.getIndexName(surveyId),
         id: activityId,
         refresh: true
       })
@@ -70,7 +68,7 @@ class ActivityExtrationService {
   private async createExtraction(surveyId: string, extractions: ActivityExtractions) {
     try {
       await ElasticsearchService.getClient().update({
-        index: this.extractionOid + surveyId,
+        index:  this.getIndexName(surveyId),
         id: extractions.getActivityId(),
         refresh: true,
         body: {
