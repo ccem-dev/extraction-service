@@ -7,7 +7,7 @@ import ActivityExtractionService from "./ActivityExtractionService";
 const json2csv = require('json-2-csv').json2csvAsync;
 const axios = require('axios').default;
 
-class PipelineService {
+class SurveyService {
 
   constructor() {
   }
@@ -117,4 +117,4 @@ async function applyRscriptToResponse(RscriptName: string,  response: any[]) {
 }
 
 
-export default new PipelineService();
+export default new SurveyService();
