@@ -3,7 +3,7 @@ import SurveyController from "../../app/controllers/SurveyController";
 
 const  SurveyRouter = Router();
 SurveyRouter.post("/rscript", SurveyController.performRscript);
-SurveyRouter.post("/csv/:surveyId", SurveyController.performAsCsv);
-SurveyRouter.post("/json/:surveyId", SurveyController.performAsJson);
+SurveyRouter.get("/csv/:surveyId", SurveyController.performAsCsv);
+SurveyRouter.get("/json/:surveyId", SurveyController.performAsJson);
 
 export default SurveyRouter;
