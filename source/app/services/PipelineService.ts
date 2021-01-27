@@ -7,9 +7,6 @@ import ActivityExtractionService from "./ActivityExtractionService";
 const json2csv = require('json-2-csv').json2csvAsync;
 const axios = require('axios').default;
 
-const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
-  "/" + process.env.PLUMBER_RUNNER;
-
 class PipelineService {
 
   constructor() {
@@ -99,6 +96,10 @@ async function applyRscriptToResponse(RscriptName: string,  response: any[]) {
   if(!rscript.script){
     throw 'R script ' + RscriptName + ' was not found';
   }
+
+  const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
+    "/" + process.env.PLUMBER_RUNNER;
+
   const resp = await axios({
     method: 'post',
     url: PLUMBER_URL,
