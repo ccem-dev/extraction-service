@@ -3,7 +3,7 @@ import ElasticsearchService from "./ElasticsearchService";
 import Rscript from "../models/rscript/RscriptFactory";
 
 class RscriptService {
-  private readonly R_SCRIPTS_INDEX = 'rscript';
+  private readonly R_SCRIPTS_INDEX = 'rscripts';
 
   constructor() {
   }
