@@ -2,11 +2,11 @@ import IResponse, {NotFoundResponse, SuccessResponse} from '../utils/response';
 import ElasticsearchService from "./ElasticsearchService";
 import RscriptService from "./RscriptService";
 import CsvService from "../utils/CsvService";
+import ActivityExtractionService from "./ActivityExtractionService";
 
 const json2csv = require('json-2-csv').json2csvAsync;
 const axios = require('axios').default;
 
-const EXTRACTIONS_INDEX = 'extractions_survey_'; //TODO pegar do ActivityExtractionService
 const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
   "/" + process.env.PLUMBER_RUNNER;
 
@@ -55,7 +55,7 @@ async function findSurveyExtractions(surveyId: string, controllFields: string[])
   const SIZE = 10000;
   const SCROLL_TIME = "1m";
 
-  const indexName = EXTRACTIONS_INDEX + surveyId;
+  const indexName = ActivityExtractionService.getIndexName(surveyId);
 
   let response : any[] = [];
   let body = await firstSearch(indexName, SIZE, SCROLL_TIME, controllFields);
