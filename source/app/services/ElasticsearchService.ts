@@ -1,9 +1,9 @@
 import { Client } from '@elastic/elasticsearch';
 import ShutdownEventService from '../utils/ShutdownEventService';
 
-const CLIENT_URL = process.env.ELASTICSEARCH_PROTOCOL + '://' + process.env.ELASTICSEARCH_HOSTNAME + ":" + process.env.ELASTICSEARCH_PORT;
-
 class ElasticsearchService {
+  private readonly CLIENT_URL = process.env.ELASTICSEARCH_PROTOCOL + '://' + process.env.ELASTICSEARCH_HOSTNAME + ":" + process.env.ELASTICSEARCH_PORT;
+  
   private configReady: boolean;
   private client: Client;
 
@@ -36,17 +36,17 @@ class ElasticsearchService {
 
   private createClient() {
     try {
-      this.client = new Client({ node: CLIENT_URL });
+      this.client = new Client({ node: this.CLIENT_URL });
       this.subscribeClientClosing();
       return this.client;
     } catch (e) {
       this.configReady = false;
-      throw "ElasticsearchService initialization error - Couldn't connect to URL " + CLIENT_URL;
+      throw "ElasticsearchService initialization error - Couldn't connect to URL " + this.CLIENT_URL;
     }
   }
 
   private subscribeClientClosing() {
-    ShutdownEventService.subscribe('ElasticsearchService', this.closeClient)
+    ShutdownEventService.subscribe('ElasticsearchService', this.closeClient);
   }
 
   private closeClient() {
