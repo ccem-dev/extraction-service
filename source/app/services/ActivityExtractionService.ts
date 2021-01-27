@@ -1,4 +1,4 @@
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response'
+import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse } from '../utils/response'
 import ActivityEnum from "../enum/activityEnum"
 import ElasticsearchService from "./ElasticsearchService"
 import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
