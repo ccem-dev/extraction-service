@@ -232,7 +232,7 @@ class ActivityExtrationService {
 
   private getQuestionFileUploadItems(question: any, questionFill: any): string {
     let fileName: string = ''
-    if (questionFill && questionFill.answer.value) {
+    if (questionFill.answer.value) {
       questionFill.answer.value.forEach((items: any, index: number) => {
         if (questionFill.answer.value.length1 == index) {
           fileName = fileName.concat(items.name)
