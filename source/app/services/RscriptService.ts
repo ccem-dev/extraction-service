@@ -2,9 +2,9 @@ import IResponse, { NotFoundResponse, SuccessResponse, ValidationResponse } from
 import ElasticsearchService from "./ElasticsearchService";
 import Rscript from "../models/rscript/RscriptFactory";
 
-const R_SCRIPTS_INDEX = 'rscript';
-
 class RscriptService {
+  private readonly R_SCRIPTS_INDEX = 'rscript';
+
   constructor() {
   }
 
@@ -14,7 +14,7 @@ class RscriptService {
     }
     try {
       await ElasticsearchService.getClient().update({
-        index: R_SCRIPTS_INDEX,
+        index: this.R_SCRIPTS_INDEX,
         id: name,
         refresh: true,
         body: {
@@ -32,7 +32,7 @@ class RscriptService {
   async get(name: string) : Promise<IResponse>{
     try {
       const { body } = await ElasticsearchService.getClient().search({
-        index: R_SCRIPTS_INDEX,
+        index: this.R_SCRIPTS_INDEX,
         type: '_doc',
         body: {
           query: {
@@ -52,7 +52,7 @@ class RscriptService {
   async delete(name: string) : Promise<IResponse>{
     try {
       await ElasticsearchService.getClient().delete({
-        index: R_SCRIPTS_INDEX,
+        index: this.R_SCRIPTS_INDEX,
         id: name,
         refresh: true
       });
