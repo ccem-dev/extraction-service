@@ -4,19 +4,19 @@ import { Request, Response } from "express";
 class SurveyController {
 
   performRscript(req: Request, res: Response): void {
-    SurveyService.performRscript(req.body.surveyId, req.body.RscriptName, req.body.controllFields)
+    SurveyService.performRscript(req.body.surveyId, req.body.RscriptName)
       .then(result => res.status(result.code).send(result.body.data))
       .catch(err => res.status(err.code).send(err.body));
   }
 
   performAsJson(req: Request, res: Response): void {
-    SurveyService.performAsJson(req.body.surveyId, req.body.controllFields)
+    SurveyService.performAsJson(req.body.surveyId)
       .then(result => res.status(result.code).send(result.body.data))
       .catch(err => res.status(err.code).send(err.body));
   }
 
   performAsCsv(req: Request, res: Response): void {
-    SurveyService.performAsCsv(req.body.surveyId, req.body.controllFields)
+    SurveyService.performAsCsv(req.body.surveyId)
       .then(result => res.status(result.code).send(result.body))
       .catch(err => res.status(err.code).send(err.body));
   }

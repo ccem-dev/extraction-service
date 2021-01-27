@@ -12,9 +12,9 @@ class SurveyService {
   constructor() {
   }
 
-  async performRscript (surveyId: string, RscriptName: string, controllFields: string[]): Promise<IResponse> {
+  async performRscript (surveyId: string, RscriptName: string): Promise<IResponse> {
     try {
-      let response = await findSurveyExtractions(surveyId, controllFields);
+      let response = await findSurveyExtractions(surveyId);
       response = await applyRscriptToResponse(RscriptName, response);
       if(typeof response == 'string'){
         return new SuccessResponse(await CsvService.createCsvFromString(response));
@@ -26,18 +26,18 @@ class SurveyService {
     }
   }
 
-  async performAsJson (surveyId: string, controllFields: string[]): Promise<IResponse> {
+  async performAsJson (surveyId: string): Promise<IResponse> {
     try {
-      return new SuccessResponse(await findSurveyExtractions(surveyId, controllFields));
+      return new SuccessResponse(await findSurveyExtractions(surveyId));
     }
     catch (e) {
       return new NotFoundResponse(e);
     }
   }
 
-  async performAsCsv (surveyId: string, controllFields: string[]): Promise<IResponse> {
+  async performAsCsv (surveyId: string): Promise<IResponse> {
     try {
-      let response = await json2csv(await findSurveyExtractions(surveyId, controllFields),
+      let response = await json2csv(await findSurveyExtractions(surveyId),
         {delimiter: { field: CsvService.getDelimiter() }});
       return new SuccessResponse(await CsvService.createCsvFromString(response));
     }
@@ -48,14 +48,14 @@ class SurveyService {
 
 }
 
-async function findSurveyExtractions(surveyId: string, controllFields: string[]) {
+async function findSurveyExtractions(surveyId: string) {
   const SIZE = 10000;
   const SCROLL_TIME = "1m";
 
   const indexName = ActivityExtractionService.getIndexName(surveyId);
 
   let response : any[] = [];
-  let body = await firstSearch(indexName, SIZE, SCROLL_TIME, controllFields);
+  let body = await firstSearch(indexName, SIZE, SCROLL_TIME);
 
   while(body.hits && (body.hits.hits.length)) {
     // @ts-ignore
@@ -67,7 +67,7 @@ async function findSurveyExtractions(surveyId: string, controllFields: string[])
   return response;
 }
 
-async function firstSearch(indexName: string, size: number, scrollTime: string, controllFields: string[]) : Promise<any>{
+async function firstSearch(indexName: string, size: number, scrollTime: string) : Promise<any>{
   const { body } = await ElasticsearchService.getClient().search({
     index: indexName,
     type: '_doc',
