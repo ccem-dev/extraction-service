@@ -8,37 +8,9 @@ class RscriptService {
   constructor() {
   }
 
-  async create(name: string, script: string) : Promise<IResponse>{
-    try {
-      await getRscript(name);
-      return new AlreadyExistsResponse();
-    }
-    catch (err) {
-      return this.update(name, script);
-    }
-  }
-
-  async createDefault(script: string) : Promise<IResponse>{
-    return this.create(Rscript.getDefaultName(), script);
-  }
-
-  async get(name: string) : Promise<IResponse>{
-    try {
-      return new SuccessResponse(await getRscript(name));
-    }
-    catch (err){
-      console.log(err);
-      return new NotFoundResponse(err);
-    }
-  }
-
-  async getDefault() : Promise<IResponse>{
-    return this.get(Rscript.getDefaultName());
-  }
-
-  async update(name: string, script: string) : Promise<IResponse>{
+  async createOrUpdate(name: string, script: string) : Promise<IResponse>{
     if(!name){
-      return getNameMissingResponse();
+      return new ValidationResponse({ message: 'Missing name field.' });
     }
     try {
       await ElasticsearchService.getClient().update({
@@ -53,19 +25,31 @@ class RscriptService {
       return new SuccessResponse();
     }
     catch (err) {
-      console.log(err);
       return new NotFoundResponse();
     }
   }
 
-  async updateDefault(script: string) : Promise<IResponse>{
-    return this.update(Rscript.getDefaultName(), script);
+  async get(name: string) : Promise<IResponse>{
+    try {
+      const { body } = await ElasticsearchService.getClient().search({
+        index: R_SCRIPTS_INDEX,
+        type: '_doc',
+        body: {
+          query: {
+            match: {
+              _id: name
+            }
+          }
+        }
+      });
+      return new SuccessResponse(body.hits.hits[0]._source);
+    }
+    catch (err){
+      return new NotFoundResponse(err);
+    }
   }
 
   async delete(name: string) : Promise<IResponse>{
-    if(!name){
-      return getNameMissingResponse();
-    }
     try {
       await ElasticsearchService.getClient().delete({
         index: R_SCRIPTS_INDEX,
@@ -75,31 +59,10 @@ class RscriptService {
       return new SuccessResponse();
     }
     catch (err) {
-      console.log(err);
       return new NotFoundResponse(err);
     }
   }
 
-}
-
-async function getRscript(name: string){
-  const { body } = await ElasticsearchService.getClient().search({
-    index: R_SCRIPTS_INDEX,
-    type: '_doc',
-    body: {
-      query: {
-        match: {
-          _id: name
-        }
-      }
-    }
-  });
-  console.log('get', body.hits.hits[0]._source)
-  return body.hits.hits[0]._source;
-}
-
-function getNameMissingResponse(){
-  return new ValidationResponse({ message: 'Missing name field.' });
 }
 
 export default new RscriptService();
