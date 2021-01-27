@@ -15,7 +15,9 @@ class App {
 
   middlewares() {
     this.express.use(express.static('public'));
-    this.express.use(bodyParser.json());
+    this.express.use(bodyParser.json({
+      limit: "100mb"
+    }));
     this.express.use(bodyParser.urlencoded({ extended: true }));
     this.express.all('*', function (req, res, next) {
       res.header('Access-Control-Allow-Origin', '*');
