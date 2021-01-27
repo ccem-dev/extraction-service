@@ -10,13 +10,13 @@ class SurveyController {
   }
 
   performAsJson(req: Request, res: Response): void {
-    SurveyService.performAsJson(req.body.surveyId)
+    SurveyService.performAsJson(req.params.surveyId)
       .then(result => res.status(result.code).send(result.body.data))
       .catch(err => res.status(err.code).send(err.body));
   }
 
   performAsCsv(req: Request, res: Response): void {
-    SurveyService.performAsCsv(req.body.surveyId)
+    SurveyService.performAsCsv(req.params.surveyId)
       .then(result => res.status(result.code).send(result.body))
       .catch(err => res.status(err.code).send(err.body));
   }
