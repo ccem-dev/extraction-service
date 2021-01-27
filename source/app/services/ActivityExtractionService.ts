@@ -5,7 +5,7 @@ import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
 
 const ACTIVITY_EXTRACTION_INDEX_SUFFIX = "extractions_survey_";
 
-class ActivityExtrationService {
+class ActivityExtractionService {
 
   constructor() {
   }
@@ -308,4 +308,4 @@ class ActivityExtrationService {
 
 }
 
-export default new ActivityExtrationService()
+export default new ActivityExtractionService()
