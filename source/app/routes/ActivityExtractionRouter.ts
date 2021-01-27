@@ -1,7 +1,7 @@
 import { Router } from 'express'
-import ExtractionController from "../controllers/ActivityExtractionController";
-const  ExtractionRouter = Router()
-ExtractionRouter.put("/activity", ExtractionController.create)
-ExtractionRouter.delete("/activity/:surveyId/:activityId", ExtractionController.remove)
+import ActivityExtractionController from "../controllers/ActivityExtractionController";
+const  ActivityExtractionRouter = Router()
+ActivityExtractionRouter.put("/activity", ActivityExtractionController.create)
+ActivityExtractionRouter.delete("/activity/:surveyId/:activityId", ActivityExtractionController.remove)
 
-export default ExtractionRouter
+export default ActivityExtractionRouter

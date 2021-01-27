@@ -1,13 +1,11 @@
 import ActivityExtractionService from '../../../app/services/ActivityExtractionService'
-import ExtractionController from '../../../app/controllers/ActivityExtractionController'
+import ActivityExtractionController from '../../../app/controllers/ActivityExtractionController'
 
 import data from "../../data/json-importer.test"
 
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../../../app/utils/response';
-
 jest.mock('../../../app/services/ActivityExtractionService')
 
-describe('ExtractionController.ts Tests', () => {
+describe('ActivityExtractionController.ts Tests', () => {
   const activityId = '5a38062628f10d1043711079'
   const surveyId = '5e96287b5689ba37a74c7904'
   let mockActivity: any
@@ -30,7 +28,7 @@ describe('ExtractionController.ts Tests', () => {
     req.body = data.extractionsActivityAll
     mockActivity.create = jest.fn()
     const spy = jest.spyOn(mockActivity, 'create').mockResolvedValue(true)
-    await ExtractionController.create(req, res)
+    await ActivityExtractionController.create(req, res)
 
     expect(spy).toHaveBeenCalled()
 
@@ -42,7 +40,7 @@ describe('ExtractionController.ts Tests', () => {
     req.body = data.extractionsActivityAll
     mockActivity.create = jest.fn()
     const spy = jest.spyOn(mockActivity, 'create').mockRejectedValue(false)
-    await ExtractionController.create(req, res)
+    await ActivityExtractionController.create(req, res)
 
     expect(spy).toHaveBeenCalled()
 
@@ -54,7 +52,7 @@ describe('ExtractionController.ts Tests', () => {
     mockActivity.remove = jest.fn()
     const spy = jest.spyOn(mockActivity, 'remove').mockResolvedValue(true)
 
-    await ExtractionController.remove(req, res)
+    await ActivityExtractionController.remove(req, res)
     expect(spy).toHaveBeenCalled()
 
     spy.mockRestore();
@@ -64,7 +62,7 @@ describe('ExtractionController.ts Tests', () => {
     mockActivity.remove = jest.fn()
     const spy = jest.spyOn(mockActivity, 'remove').mockRejectedValue(false)
 
-    await ExtractionController.remove(req, res)
+    await ActivityExtractionController.remove(req, res)
     expect(spy).toHaveBeenCalled()
 
     spy.mockRestore();

@@ -1,10 +1,10 @@
 import request from 'supertest'
-import ExtractionRouter from '../../../app/routes/ActivityExtractionRouter'
+import ActivityExtractionRouter from '../../../app/routes/ActivityExtractionRouter'
 
-describe('ExtractionRouter.ts Tests', () => {
+describe('ActivityExtractionRouter.ts Tests', () => {
 
   it('should execute create extraction activity ', async done => {
-    request(ExtractionRouter)
+    request(ActivityExtractionRouter)
       .put(`/activity`)
       .send("{}")
       .expect(200)
@@ -13,7 +13,7 @@ describe('ExtractionRouter.ts Tests', () => {
   })
 
   it('should execute remove extraction activity ', async done => {
-    request(ExtractionRouter)
+    request(ActivityExtractionRouter)
       .delete(`/activity`)
       .send("{}")
       .expect(200)
