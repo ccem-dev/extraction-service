@@ -26,19 +26,19 @@ class ActivityExtractions {
     this.acronym = acronym
     this.version = version
     this.recruitment_number = recruitmentNumber
-    this.participant_field_center = participant_field_center
-    this.mode = mode
-    this.type = type ? type : ''
+    this.participant_field_center = participant_field_center || ''
+    this.mode = mode || ''
+    this.type = type || ''
     this.category = category
-    this.participant_field_center_by_activity = participant_field_center_by_activity
-    this.interviewer = interviewer ? interviewer : ''
-    this.current_status = current_status
-    this.current_status_date = current_status_date
-    this.creation_date = creation_date
-    this.paper_realization_date = paper_realization_date ? paper_realization_date : ''
-    this.paper_interviewer = paper_interviewer ? paper_interviewer : ''
-    this.last_finalization_date = last_finalization_date ? last_finalization_date : ''
-    this.external_id = external_id ? external_id : ''
+    this.participant_field_center_by_activity = participant_field_center_by_activity || ''
+    this.interviewer = interviewer || ''
+    this.current_status = current_status || ''
+    this.current_status_date = current_status_date || ''
+    this.creation_date = creation_date || ''
+    this.paper_realization_date = paper_realization_date || ''
+    this.paper_interviewer = paper_interviewer || ''
+    this.last_finalization_date = last_finalization_date || ''
+    this.external_id = external_id || ''
     this.variables = variables
   }
 
@@ -46,7 +46,7 @@ class ActivityExtractions {
     let extractions: any = new ActivityExtractions()
     for (let index in items) {
       if (extractions.hasOwnProperty(index)) {
-        extractions[index] = items[index]
+        extractions[index] = items[index] || ''
       }
     }
     return extractions
