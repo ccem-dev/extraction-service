@@ -20,6 +20,18 @@ class SurveyController {
       .then(result => res.status(result.code).send(result.body))
       .catch(err => res.status(err.code).send(err.body));
   }
+
+  getSurveyActivitiesIds(req: Request, res: Response): void {
+    SurveyService.getSurveyActivitiesIds(req.params.surveyId)
+      .then(result => res.status(result.code).send(result.body))
+      .catch(err => res.status(err.code).send(err.body));
+  }
+
+  getAllActivitiesIds(req: Request, res: Response): void {
+    SurveyService.getAllActivitiesIds()
+      .then(result => res.status(result.code).send(result.body))
+      .catch(err => res.status(err.code).send(err.body));
+  }
 }
 
 export default new SurveyController();
