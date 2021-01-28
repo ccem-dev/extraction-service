@@ -24,7 +24,7 @@ describe('ActivityExtractionController.ts Tests', () => {
     mockActivity = ActivityExtractionService as jest.Mocked<typeof ActivityExtractionService>
   })
 
-  it("createMethod return values activity", async () => {
+  it("createMethod should resolve the request activity", async () => {
     req.body = data.extractionsActivityAll
     mockActivity.create = jest.fn()
     const spy = jest.spyOn(mockActivity, 'create').mockResolvedValue(true)
@@ -36,7 +36,7 @@ describe('ActivityExtractionController.ts Tests', () => {
 
   })
 
-  it("createMethod return values activity rejects", async () => {
+  it("createMethod should reject the request activity", async () => {
     req.body = data.extractionsActivityAll
     mockActivity.create = jest.fn()
     const spy = jest.spyOn(mockActivity, 'create').mockRejectedValue(false)
@@ -48,7 +48,7 @@ describe('ActivityExtractionController.ts Tests', () => {
 
   })
 
-  it("removeMethod return values extraction activity", async () => {
+  it("removeMethod should resolve the request activity", async () => {
     mockActivity.remove = jest.fn()
     const spy = jest.spyOn(mockActivity, 'remove').mockResolvedValue(true)
 
@@ -58,7 +58,7 @@ describe('ActivityExtractionController.ts Tests', () => {
     spy.mockRestore();
   })
 
-  it("removeMethod return values extraction activity rejects", async () => {
+  it("removeMethod should reject the request activity", async () => {
     mockActivity.remove = jest.fn()
     const spy = jest.spyOn(mockActivity, 'remove').mockRejectedValue(false)
 
