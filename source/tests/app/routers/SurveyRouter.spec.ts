@@ -17,11 +17,11 @@ describe('SurveyRouter.ts Tests', () => {
   })
 
   it('should execute get csv ', async done => {
-    let res = request(app)
+    request(app)
       .get("/rscript/name")
       .expect('Content-Type', 'text/html; charset=utf-8')
       .expect(404, done);
-    console.log(res);
+
   })
 
   it('should execute get json', async done => {
