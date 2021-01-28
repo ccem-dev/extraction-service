@@ -8,7 +8,15 @@ variable "elasticsearch-port"{ default = "9200" }
 variable "elasticsearch-protocol"{ default = "http" }
 variable "elasticsearch-initialize"{ default = "false" }
 resource "docker_image" "extraction-service" { name = var.extraction-service-name }
+
+resource "null_resource" "extraction-service-cleaning" {
+  provisioner "local-exec" {
+    command = "docker stop extraction-service >/dev/null 2>&1; docker rm extraction-service >/dev/null 2>&1;"
+  }
+}
+
 resource "docker_container" "extraction-service" {
+  depends_on = [null_resource.extraction-service-cleaning]
   name = "extraction-service"
   image = docker_image.extraction-service.name
   env = [
@@ -21,7 +29,7 @@ resource "docker_container" "extraction-service" {
   ]
   ports {
     internal = 8080
-    external = "${var.extraction-service-port}"
+    external = var.extraction-service-port
   }
   networks_advanced {
     name = var.extraction-service-network
