@@ -5,11 +5,8 @@ import Rscript from "../models/rscript/RscriptFactory";
 class RscriptService {
   private readonly R_SCRIPTS_INDEX = 'rscripts';
 
-  constructor() {
-  }
-
-  async createOrUpdate(name: string, script: string) : Promise<IResponse>{
-    if(!name){
+  async createOrUpdate(name: string, script: string): Promise<IResponse> {
+    if (!name) {
       return new ValidationResponse({ message: 'Missing name field.' });
     }
     try {
@@ -29,7 +26,7 @@ class RscriptService {
     }
   }
 
-  async get(name: string) : Promise<IResponse>{
+  async get(name: string): Promise<IResponse> {
     try {
       const { body } = await ElasticsearchService.getClient().search({
         index: this.R_SCRIPTS_INDEX,
@@ -44,12 +41,12 @@ class RscriptService {
       });
       return new SuccessResponse(body.hits.hits[0]._source);
     }
-    catch (err){
+    catch (err) {
       return new NotFoundResponse(err);
     }
   }
 
-  async delete(name: string) : Promise<IResponse>{
+  async delete(name: string): Promise<IResponse> {
     try {
       await ElasticsearchService.getClient().delete({
         index: this.R_SCRIPTS_INDEX,

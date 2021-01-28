@@ -63,7 +63,7 @@ describe('ActivityExtractionService.ts Tests', () => {
     expect(ActivityExtractionService.extractSurveyIdFromIndexName("extractions_survey_123")).toEqual("123")
   })
 
-  it("removeMethod should execute extraction activity", async () => {
+  it("removeMethod should execute delete extraction activity", async () => {
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 
     await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new SuccessResponse())
