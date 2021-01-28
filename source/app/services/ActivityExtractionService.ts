@@ -144,10 +144,10 @@ class ActivityExtractionService {
     let questionAnswer: any[] = []
     let QuestionFill: any
 
-    const skipp = this.skippAnswer(activityNavigationTrackerItems, question)
+    const skippy = this.skippyAnswer(activityNavigationTrackerItems, question)
 
-    if (skipp) {
-      questionAnswer = skipp
+    if (skippy) {
+      questionAnswer = skippy
     } else {
       QuestionFill = activityFillingList.find((activity: any) => activity.questionID === question.templateID)
 
@@ -316,7 +316,7 @@ class ActivityExtractionService {
     return activityNavigationTrackerItems.find((items: any) => items.id == questionID)
   }
 
-  private skippAnswer(activityNavigationTrackerItemsSkipped: any, question: any): any {
+  private skippyAnswer(activityNavigationTrackerItemsSkipped: any, question: any): any {
     let NavigationItem: any
 
     if (activityNavigationTrackerItemsSkipped.length == 0) {
