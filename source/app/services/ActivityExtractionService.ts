@@ -184,85 +184,31 @@ class ActivityExtractionService {
         break
       }
       case ActivityEnum.FILE_UPLOAD_QUESTION: {
-        let fileName: string = ''
-        if (questionFill && questionFill.answer.value) {
-          questionFill.answer.value.forEach((items: any, index: number) => {
-            if (questionFill.answer.value.length1 == index) {
-              fileName = fileName.concat(items.name)
-            } else {
-              fileName = fileName.concat(items.name + ',')
-            }
-          })
+        if (questionFill) {
+          questionAnswer = this.getQuestionFileUploadItems(question, questionFill)
           questionComment = questionFill.comment
         }
-        questionItems = questionItems.concat(this.attributeQuestion(question.customID, fileName, metadataQuestion, questionComment, optionAnswer))
+        questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
         break
       }
       case ActivityEnum.CHECKBOX_QUESTION: {
         optionAnswer = false
-        if (questionFill && questionFill.answer.value) {
-          questionItems = questionFill.answer.value.map((items: any) => {
-            return {
-              [items.option]: items.state ? '1' : '0'
-            }
-          })
-        } else if (question.options) {
-          questionItems = question.options.map((option: any) => {
-            if (option.customOptionID) {
-              return {
-                [option.customOptionID]: ''
-              }
-            }
-          })
-        }
+        questionItems = this.getQuestionCheckboxItems(question, questionFill)
+
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
         break
       }
       case ActivityEnum.GRID_TEXT_QUESTION: {
         optionAnswer = false
-        if (questionFill && questionFill.answer.value) {
-          questionFill.answer.value.forEach((item: any) => {
-            questionItems = item.map((items: any) => {
-              return {
-                [items.gridText]: items.value ? items.value : ''
-              }
-            })
-          })
-        } else if (question.lines) {
-          question.lines.forEach((line: any) => {
-            questionItems = line.gridTextList.map((items: any) => {
-              if (items) {
-                return {
-                  [items.customID]: ''
-                }
-              }
-            })
-          })
-        }
+        questionItems = this.getQuestionGridTextItems(question, questionFill)
+
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
         break
       }
       case ActivityEnum.GRID_INTEGER_QUESTION: {
         optionAnswer = false
-        if (questionFill && questionFill.answer.value) {
-          questionFill.answer.value.forEach((item: any) => {
-            questionItems = item.map((items: any) => {
-              return {
-                [items.customID]: items.value ? items.value.toString() : ''
-              }
-            })
-          })
-        } else if (question.lines) {
-          question.lines.forEach((line: any) => {
-            questionItems = line.gridIntegerList.map((items: any) => {
-              if (items) {
-                return {
-                  [items.customID]: ''
-                }
-              }
-            })
-          })
-        }
+        questionItems = this.getQuestionGridIntegerItems(question, questionFill)
+
         questionItems = questionItems.concat(this.attributeQuestion(question.customID, questionAnswer, metadataQuestion, questionComment, optionAnswer))
         break
       }
@@ -282,6 +228,88 @@ class ActivityExtractionService {
       }
     }
     return questionItems
+  }
+
+  private getQuestionFileUploadItems(question: any, questionFill: any): string {
+    let fileName: string = ''
+    if (questionFill.answer.value) {
+      questionFill.answer.value.forEach((items: any, index: number) => {
+        if (questionFill.answer.value.length1 == index) {
+          fileName = fileName.concat(items.name)
+        } else {
+          fileName = fileName.concat(items.name + ',')
+        }
+      })
+    }
+    return fileName
+  }
+
+  private getQuestionGridIntegerItems(question: any, questionFill: any): any[] {
+    let questionItems: any[] = []
+    if (questionFill && questionFill.answer.value) {
+      questionFill.answer.value.forEach((item: any) => {
+        questionItems = questionItems.concat(item.map((items: any) => {
+          return {
+            [items.customID]: items.value ? items.value.toString() : ''
+          }
+        }))
+      })
+    } else if (question.lines) {
+      question.lines.forEach((line: any) => {
+        questionItems = questionItems.concat(line.gridIntegerList.map((items: any) => {
+          if (items) {
+            return {
+              [items.customID]: ''
+            }
+          }
+        }))
+      })
+    }
+
+    return questionItems
+  }
+
+  private getQuestionGridTextItems(question: any, questionFill: any): any[] {
+    let questionItems: any[] = []
+    if (questionFill && questionFill.answer.value) {
+      questionFill.answer.value.forEach((item: any) => {
+        questionItems = questionItems.concat(item.map((items: any) => {
+          return {
+            [items.gridText]: items.value ? items.value : ''
+          }
+        }))
+      })
+    } else if (question.lines) {
+      question.lines.forEach((line: any) => {
+        questionItems = questionItems.concat(line.gridTextList.map((items: any) => {
+          if (items) {
+            return {
+              [items.customID]: ''
+            }
+          }
+        }))
+      })
+    }
+
+    return questionItems
+  }
+
+  private getQuestionCheckboxItems(question: any, questionFill: any): any[] {
+    if (questionFill && questionFill.answer.value) {
+      return questionFill.answer.value.map((items: any) => {
+        return {
+          [items.option]: items.state ? '1' : '0'
+        }
+      })
+    } else if (question.options) {
+      return question.options.map((option: any) => {
+        if (option.customOptionID) {
+          return {
+            [option.customOptionID]: ''
+          }
+        }
+      })
+    }
   }
 
   private navigationItems(activityNavigationTrackerItems: any, questionID: string) {

@@ -1,7 +1,7 @@
 import ActivityExtractionService from "../services/ActivityExtractionService";
 import { Request, Response } from "express";
 
-class ExtrationController {
+class ActivityExtrationController {
   async create(req: Request, res: Response): Promise<void> {
     await ActivityExtractionService.create(req.body)
       .then(result => res.status(result.code).send(result.body))
@@ -15,4 +15,4 @@ class ExtrationController {
   }
 };
 
-export default new ExtrationController()
+export default new ActivityExtrationController()
