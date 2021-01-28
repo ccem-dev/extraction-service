@@ -55,7 +55,15 @@ describe('ActivityExtractionService.ts Tests', () => {
     spyExtraction.mockRestore();
   })
 
-  it("removeMethod return values extraction activity", async () => {
+  it("getIndexNameMethod should return value index", () => {
+    expect(ActivityExtractionService.getIndexName("123")).toEqual("extractions_survey_123")
+  })
+
+  it("extractSurveyIdFromIndexNameMethod should return value index", () => {
+    expect(ActivityExtractionService.extractSurveyIdFromIndexName("extractions_survey_123")).toEqual("123")
+  })
+
+  it("removeMethod should execute extraction activity", async () => {
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 
     await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new SuccessResponse())
@@ -64,7 +72,7 @@ describe('ActivityExtractionService.ts Tests', () => {
     spyExtraction.mockRestore();
   })
 
-  it("removeMethod return values extraction throw data not found", async () => {
+  it("removeMethod should execute extraction throw data not found", async () => {
     Mockclient.delete = function () { return Promise.reject({ meta: { statusCode: '404' } }) }
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 
@@ -74,7 +82,7 @@ describe('ActivityExtractionService.ts Tests', () => {
     spyExtraction.mockRestore();
   })
 
-  it("removeMethod return values extraction throw internal error", async () => {
+  it("removeMethod should execute throw internal error", async () => {
     Mockclient.delete = function () { return Promise.reject() }
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
 

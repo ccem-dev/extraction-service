@@ -14,7 +14,6 @@ class ActivityExtractionService {
     return indexName.replace(this.ACTIVITY_EXTRACTION_INDEX_SUFFIX, "");
   }
 
-
   async create(extractions: any): Promise<IResponse> {
     let activityFillingList: any[]
     let activityNavigationTrackerItemsSkipped: any[]
