@@ -1,3 +1,4 @@
+variable "extraction-service-port"{ default = 51020 }
 variable "extraction-service-name"{ default = "extraction-service:latest" }
 variable "extraction-service-network"{ default = "otus-api-network" }
 variable "extraction-service-memory"{ default = "1024" }
@@ -18,6 +19,10 @@ resource "docker_container" "extraction-service" {
     "ELASTICSEARCH_PROTOCOL=${var.elasticsearch-protocol}",
     "ELASTICSEARCH_INITIALIZE=${var.elasticsearch-initialize}",
   ]
+  ports {
+    internal = 8080
+    external = "${var.extraction-service-port}"
+  }
   networks_advanced {
     name = var.extraction-service-network
   }
