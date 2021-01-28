@@ -6,15 +6,8 @@ import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessRespon
 jest.mock('../../../app/services/ElasticsearchService.ts')
 
 describe('RscriptService.ts Tests', () => {
-  let ACTIVITY = {}
   let name: string = "Fulano"
   let script: string = "scripts"
-  const extractionData = {
-    activity: data.activity,
-    survey: data.survey
-  }
-  const extractionActivityAllData = data.extractionsActivityAll
-
   let Mockclient = data.client
   let mockElastic: any
   let spyRscript: any
