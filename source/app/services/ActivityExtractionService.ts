@@ -3,7 +3,7 @@ import ActivityEnum from "../enum/activityEnum"
 import ElasticsearchService from "./ElasticsearchService"
 import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
 
-class ActivityExtrationService {
+class ActivityExtractionService {
   private readonly ACTIVITY_EXTRACTION_INDEX_SUFFIX = "extractions_survey_";
 
   getIndexName(surveyId: string) {
@@ -115,17 +115,17 @@ class ActivityExtrationService {
   }
 
   private getSingleSelectionExtractionValue(answer: any, question: any) {
-    let singleSelectioExtractionValue: string = ""
+    let singleSelectionExtractionValue: string = ""
 
     if (question.options) {
       question.options.forEach((option: any) => {
         if (option.value.toString() == answer) {
-          singleSelectioExtractionValue = option.extractionValue
+          singleSelectionExtractionValue = option.extractionValue
         }
       })
     }
 
-    return singleSelectioExtractionValue
+    return singleSelectionExtractionValue
   }
 
   private attributeQuestion(customId: string, answerValue: any, metadataValue: string, commentValue: string, option: boolean): any[] {
@@ -332,4 +332,4 @@ class ActivityExtrationService {
 
 }
 
-export default new ActivityExtrationService()
+export default new ActivityExtractionService()
