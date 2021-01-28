@@ -1,4 +1,4 @@
-import SurveyActivityIdsFactory from '../../../app/models/activity/SurveyActivityIdsFactory'
+import SurveyActivityIdsFactory from '../../../../app/models/activity/SurveyActivityIdsFactory'
 
 describe('SurveyActivityIdsFactory.ts Tests', () => {
   let surveyActivityIds: SurveyActivityIdsFactory = new SurveyActivityIdsFactory("123",["1234"]);

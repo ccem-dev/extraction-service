@@ -1,6 +1,6 @@
-import ActivityExtractions from '../../../app/models/activity/ActivityExtractionFactory'
-import ActivityExtractionFactory from '../../../app/models/activity/ActivityExtractionFactory'
-import data from "../../data/json-importer.test"
+import ActivityExtractions from '../../../../app/models/activity/ActivityExtractionFactory'
+import ActivityExtractionFactory from '../../../../app/models/activity/ActivityExtractionFactory'
+import data from "../../../data/json-importer.test"
 
 describe('ActivityExtractionFactory.ts Tests', () => {
   let activityAll = data.activity;
