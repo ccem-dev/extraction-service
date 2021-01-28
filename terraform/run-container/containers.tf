@@ -9,14 +9,26 @@ variable "elasticsearch-protocol"{ default = "http" }
 variable "elasticsearch-initialize"{ default = "false" }
 resource "docker_image" "extraction-service" { name = var.extraction-service-name }
 
-resource "null_resource" "extraction-service-cleaning" {
+resource "null_resource" "network-creation" {
   provisioner "local-exec" {
-    command = "docker stop extraction-service >/dev/null 2>&1; docker rm extraction-service >/dev/null 2>&1;"
+    command = "docker network create ${var.extraction-service-network}"
+    on_failure = continue
+  }
+}
+
+resource "null_resource" "extraction-service-container-removal" {
+  provisioner "local-exec" {
+    command = "docker stop extraction-service"
+    on_failure = continue
+  }
+  provisioner "local-exec" {
+    command = "docker rm extraction-service"
+    on_failure = continue
   }
 }
 
 resource "docker_container" "extraction-service" {
-  depends_on = [null_resource.extraction-service-cleaning]
+  depends_on = [null_resource.network-creation, null_resource.extraction-service-container-removal]
   name = "extraction-service"
   image = docker_image.extraction-service.name
   env = [
