@@ -10,6 +10,11 @@ class ActivityExtractionService {
     return this.ACTIVITY_EXTRACTION_INDEX_SUFFIX + surveyId;
   }
 
+  extractSurveyIdFromIndexName(indexName: string){
+    return indexName.replace(this.ACTIVITY_EXTRACTION_INDEX_SUFFIX, "");
+  }
+
+
   async create(extractions: any): Promise<IResponse> {
     let activityFillingList: any[]
     let activityNavigationTrackerItemsSkipped: any[]
