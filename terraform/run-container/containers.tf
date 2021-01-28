@@ -11,7 +11,7 @@ resource "docker_container" "extraction-service" {
   name = "extraction-service"
   image = docker_image.extraction-service.name
   env = [
-    "MEMORY=var.extraction-service-memory",
+    "MEMORY=${var.extraction-service-memory}",
     "API_PORT=var.api-port",
     "ELASTICSEARCH_HOSTNAME=var.elasticsearch-hostname",
     "ELASTICSEARCH_PORT=var.elasticsearch-port",
