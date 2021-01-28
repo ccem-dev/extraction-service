@@ -1,5 +1,5 @@
 variable "extraction-service-name"{ default = "extraction-service:latest" }
-variable "extraction-service-network"{ default = "otus-platform-network" }
+variable "extraction-service-network"{ default = "otus-api-network" }
 variable "extraction-service-memory"{ default = "1024" }
 variable "api-port"{ default = "8080" }
 variable "elasticsearch-hostname"{ default = "elasticsearch" }
@@ -12,11 +12,11 @@ resource "docker_container" "extraction-service" {
   image = docker_image.extraction-service.name
   env = [
     "MEMORY=${var.extraction-service-memory}",
-    "API_PORT=var.api-port",
-    "ELASTICSEARCH_HOSTNAME=var.elasticsearch-hostname",
-    "ELASTICSEARCH_PORT=var.elasticsearch-port",
-    "ELASTICSEARCH_PROTOCOL=var.elasticsearch-protocol",
-    "ELASTICSEARCH_INITIALIZE=var.elasticsearch-initialize",
+    "API_PORT=${var.api-port}",
+    "ELASTICSEARCH_HOSTNAME=${var.elasticsearch-hostname}",
+    "ELASTICSEARCH_PORT=${var.elasticsearch-port}",
+    "ELASTICSEARCH_PROTOCOL=${var.elasticsearch-protocol}",
+    "ELASTICSEARCH_INITIALIZE=${var.elasticsearch-initialize}",
   ]
   networks_advanced {
     name = var.extraction-service-network
