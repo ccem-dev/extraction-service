@@ -15,7 +15,7 @@ describe('ActivityExtractionService.ts Tests', () => {
   }
   const extractionActivityAllData = data.extractionsActivityAll
 
-  let Mockclient = data.client
+  let MockClient = data.client
   let mockExtraction: any
   let spyExtraction: any
 
@@ -24,14 +24,14 @@ describe('ActivityExtractionService.ts Tests', () => {
   })
 
   it("createExtractionMethod create values extraction", async () => {
-    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
+    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
     await expect(ActivityExtractionService.create(extractionData)).resolves.toEqual(new SuccessResponse());
     expect(spyExtraction).toHaveBeenCalled()
     spyExtraction.mockRestore();
   })
 
   it("createExtractionMethod create values extraction question All and null navigationTracking", async () => {
-    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
+    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
     await expect(ActivityExtractionService.create(extractionActivityAllData)).resolves.toEqual(new SuccessResponse());
     expect(spyExtraction).toHaveBeenCalled()
     spyExtraction.mockRestore();
@@ -39,15 +39,15 @@ describe('ActivityExtractionService.ts Tests', () => {
 
   it("createExtractionMethod create values extraction activity undefined", async () => {
     ACTIVITY = { activity: null };
-    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
+    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
     await expect(ActivityExtractionService.create(ACTIVITY)).resolves.toEqual({ "body": { "data": { "message": "Activity not found" } }, "code": 404 });
     expect(spyExtraction).not.toHaveBeenCalled()
     spyExtraction.mockRestore();
   })
 
   it("createMethod create values extraction throw internal error", async () => {
-    Mockclient.update = function () { return Promise.reject() }
-    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
+    MockClient.update = function () { return Promise.reject() }
+    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
 
     await expect(ActivityExtractionService.create(extractionActivityAllData)).resolves.toEqual(new InternalServerErrorResponse(Error()))
     expect(spyExtraction).toHaveBeenCalled()
@@ -64,7 +64,7 @@ describe('ActivityExtractionService.ts Tests', () => {
   })
 
   it("removeMethod should execute delete extraction activity", async () => {
-    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
+    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
 
     await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new SuccessResponse())
     expect(spyExtraction).toHaveBeenCalled()
@@ -73,8 +73,8 @@ describe('ActivityExtractionService.ts Tests', () => {
   })
 
   it("removeMethod should execute extraction throw data not found", async () => {
-    Mockclient.delete = function () { return Promise.reject({ meta: { statusCode: '404' } }) }
-    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
+    MockClient.delete = function () { return Promise.reject({ meta: { statusCode: '404' } }) }
+    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
 
     await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new NotFoundResponse())
     expect(spyExtraction).toHaveBeenCalled()
@@ -83,8 +83,8 @@ describe('ActivityExtractionService.ts Tests', () => {
   })
 
   it("removeMethod should execute throw internal error", async () => {
-    Mockclient.delete = function () { return Promise.reject() }
-    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(Mockclient)
+    MockClient.delete = function () { return Promise.reject() }
+    spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
 
     await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new InternalServerErrorResponse())
     expect(spyExtraction).toHaveBeenCalled()

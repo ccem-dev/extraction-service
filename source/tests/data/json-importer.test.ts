@@ -4884,13 +4884,20 @@ data.activity = {
     }
   }
 data.client = {
+  scroll: function (obj: any) { return { body: {}, scroll: {} } },
   index: function (obj: any) { return { body: { _id: "1067FXMBfnuOBlCe39eo" } } },
   search: function (obj: any) {
     return {
       body: {
         hits: {
-          hits: [{test:""}]
-        }
+          hits: [{
+            _index: "",
+            _source: {
+              activityId: "123456"
+            }
+          }]
+        },
+        _scroll_id: "123"
       }
     }
   },

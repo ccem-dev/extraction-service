@@ -1,4 +1,4 @@
-import IResponse, {NotFoundResponse, SuccessResponse} from '../utils/response';
+import IResponse, { NotFoundResponse, SuccessResponse } from '../utils/response';
 import ElasticsearchService from "./ElasticsearchService";
 import RscriptService from "./RscriptService";
 import CsvService from "../utils/CsvService";
@@ -10,14 +10,11 @@ const axios = require('axios').default;
 
 class SurveyService {
 
-  constructor() {
-  }
-
-  async performRscript (surveyId: string, RscriptName: string): Promise<IResponse> {
+  async performRscript(surveyId: string, RscriptName: string): Promise<IResponse> {
     try {
-      let response = await findSurveyExtractions(surveyId);
-      response = await applyRscriptToResponse(RscriptName, response);
-      if(typeof response == 'string'){
+      let response = await this.findSurveyExtractions(surveyId);
+      response = await this.applyRscriptToResponse(RscriptName, response);
+      if (typeof response == 'string') {
         return new SuccessResponse(await CsvService.createCsvFromString(response));
       }
       return new SuccessResponse(response);
@@ -27,19 +24,19 @@ class SurveyService {
     }
   }
 
-  async performAsJson (surveyId: string): Promise<IResponse> {
+  async performAsJson(surveyId: string): Promise<IResponse> {
     try {
-      return new SuccessResponse(await findSurveyExtractions(surveyId));
+      return new SuccessResponse(await this.findSurveyExtractions(surveyId));
     }
     catch (e) {
       return new NotFoundResponse(e);
     }
   }
 
-  async performAsCsv (surveyId: string): Promise<IResponse> {
+  async performAsCsv(surveyId: string): Promise<IResponse> {
     try {
-      let response = await json2csv(await findSurveyExtractions(surveyId),
-        {delimiter: { field: CsvService.getDelimiter() }});
+      let response = await json2csv(await this.findSurveyExtractions(surveyId),
+        { delimiter: { field: CsvService.getDelimiter() } });
       return new SuccessResponse(await CsvService.createCsvFromString(response));
     }
     catch (e) {
@@ -47,9 +44,9 @@ class SurveyService {
     }
   }
 
-  async getSurveyActivitiesIds(surveyId: string) : Promise<IResponse>{
+  async getSurveyActivitiesIds(surveyId: string): Promise<IResponse> {
     try {
-      let activityIds = (await findSurveyExtractions(surveyId))
+      let activityIds = (await this.findSurveyExtractions(surveyId))
         .map((doc: { activityId: string }) => doc.activityId);
       return new SuccessResponse(activityIds);
     }
@@ -64,19 +61,19 @@ class SurveyService {
       const SCROLL_TIME = "1m";
       const indexName = ActivityExtractionService.getIndexName('*');
 
-      let surveyIdDict : any = {};
-      let body = await firstSearch(indexName, SIZE, SCROLL_TIME);
+      let surveyIdDict: any = {};
+      let body = await this.firstSearch(indexName, SIZE, SCROLL_TIME);
 
-      while(body.hits && (body.hits.hits.length)) {
-        body.hits.hits.forEach((hit: {_index:string, _source: { activityId: string }}) => {
+      while (body.hits && (body.hits.hits.length)) {
+        body.hits.hits.forEach((hit: { _index: string, _source: { activityId: string } }) => {
           let surveyId = ActivityExtractionService.extractSurveyIdFromIndexName(hit._index);
-          if(!surveyIdDict[surveyId]){
+          if (!surveyIdDict[surveyId]) {
             surveyIdDict[surveyId] = [];
           }
           surveyIdDict[surveyId].push(hit._source.activityId);
         });
 
-        body = await searchMore(body._scroll_id, SCROLL_TIME);
+        body = await this.searchMore(body._scroll_id, SCROLL_TIME);
       }
 
       return new SuccessResponse(
@@ -87,75 +84,74 @@ class SurveyService {
     }
   }
 
-}
+  private async findSurveyExtractions(surveyId: string) {
+    const SIZE = 10000;
+    const SCROLL_TIME = "1m";
 
-async function findSurveyExtractions(surveyId: string) {
-  const SIZE = 10000;
-  const SCROLL_TIME = "1m";
+    const indexName = ActivityExtractionService.getIndexName(surveyId);
 
-  const indexName = ActivityExtractionService.getIndexName(surveyId);
+    let response: any[] = [];
+    let body = await this.firstSearch(indexName, SIZE, SCROLL_TIME);
 
-  let response : any[] = [];
-  let body = await firstSearch(indexName, SIZE, SCROLL_TIME);
-
-  while(body.hits && (body.hits.hits.length)) {
-    // @ts-ignore
-    response = response.concat(body.hits.hits.map((hit: {_source: any}) => hit._source));
-    // @ts-ignore
-    body = await searchMore(body._scroll_id, SCROLL_TIME);
-  }
-
-  return response;
-}
-
-async function firstSearch(indexName: string, size: number, scrollTime: string) : Promise<any>{
-  const { body } = await ElasticsearchService.getClient().search({
-    index: indexName,
-    type: '_doc',
-    size: size,
-    scroll: scrollTime,
-    body: {
-      query: {
-        "match_all": {}
-      },
-      _source: true
+    while (body.hits && (body.hits.hits.length)) {
+      // @ts-ignore
+      response = response.concat(body.hits.hits.map((hit: { _source: any }) => hit._source));
+      // @ts-ignore
+      body = await this.searchMore(body._scroll_id, SCROLL_TIME);
     }
-  });
-  return body;
-}
 
-async function searchMore(scrollId: string, strollTime: string) : Promise<any>{
-  const { body } = await ElasticsearchService.getClient().scroll({
-    scroll_id: scrollId,
-    scroll: strollTime
-  });
-  return body;
-}
-
-async function applyRscriptToResponse(RscriptName: string,  response: any[]) {
-  const rscript = (await RscriptService.get(RscriptName)).body.data;
-  if(!rscript.script){
-    throw 'R script ' + RscriptName + ' was not found';
+    return response;
   }
 
-  const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
-    "/" + process.env.PLUMBER_RUNNER;
+  private async firstSearch(indexName: string, size: number, scrollTime: string): Promise<any> {
+    const { body } = await ElasticsearchService.getClient().search({
+      index: indexName,
+      type: '_doc',
+      size: size,
+      scroll: scrollTime,
+      body: {
+        query: {
+          "match_all": {}
+        },
+        _source: true
+      }
+    });
+    return body;
+  }
 
-  const resp = await axios({
-    method: 'post',
-    url: PLUMBER_URL,
-    data: {
-      "script": rscript.script,
-      "arg": response
-    },
-    headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
-    maxContentLength: parseInt(process.env.MAX_CONTENT_LENGTH),
-    maxBodyLength: parseInt(process.env.MAX_BODY_LENGTH)
-  }).catch((err: any) => {
-    throw err;
-  });
-  return resp.data;
+  private async searchMore(scrollId: string, strollTime: string): Promise<any> {
+    const { body } = await ElasticsearchService.getClient().scroll({
+      scroll_id: scrollId,
+      scroll: strollTime
+    });
+    return body;
+  }
+
+  private async applyRscriptToResponse(RscriptName: string, response: any[]) {
+    const rscript = (await RscriptService.get(RscriptName)).body.data;
+    if (!rscript.script) {
+      throw 'R script ' + RscriptName + ' was not found';
+    }
+
+    const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
+      "/" + process.env.PLUMBER_RUNNER;
+
+    const resp = await axios({
+      method: 'post',
+      url: PLUMBER_URL,
+      data: {
+        "script": rscript.script,
+        "arg": response
+      },
+      headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
+      maxContentLength: parseInt(process.env.MAX_CONTENT_LENGTH),
+      maxBodyLength: parseInt(process.env.MAX_BODY_LENGTH)
+    }).catch((err: any) => {
+      throw err;
+    });
+    return resp.data;
+  }
+
 }
-
 
 export default new SurveyService();
