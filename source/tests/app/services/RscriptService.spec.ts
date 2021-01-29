@@ -1,7 +1,7 @@
 import RscriptService from '../../../app/services/RscriptService'
 import ElasticsearchService from "../../../app/services/ElasticsearchService"
 import data from "../../data/json-importer.test"
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../../../app/utils/response';
+import { NotFoundResponse, SuccessResponse, ValidationResponse } from '../../../app/utils/response';
 
 jest.mock('../../../app/services/ElasticsearchService.ts')
 
@@ -21,6 +21,10 @@ describe('RscriptService.ts Tests', () => {
     await expect(RscriptService.createOrUpdate(name, script)).resolves.toEqual(new SuccessResponse());
     expect(spyRscript).toHaveBeenCalled()
     spyRscript.mockRestore();
+  })
+
+  it("createOrUpdateExtractionMethod create values rscript name null", async () => {
+    await expect(RscriptService.createOrUpdate(null, script)).resolves.toEqual(new ValidationResponse({ message: 'Missing name field.' }))
   })
 
   it("createOrUpdateExtractionMethod should create values but reject", async () => {
