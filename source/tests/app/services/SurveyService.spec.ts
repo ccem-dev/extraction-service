@@ -102,30 +102,6 @@ describe('SurveyService.ts Tests', () => {
     spySurveyTwo.mockRestore()
   })
 
-  it("getAllActivitiesIdsMethod should execute survey", async () => {
-    mockClientSearch()
-    jest.spyOn(ActivityExtractionService, "extractSurveyIdFromIndexName").mockReturnValue(surveyId)
-    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-
-    await expect(SurveyService.getAllActivitiesIds()).resolves.toEqual({ body: { data: [{ "activityIds": ["123456",], "surveyId": "123" }] }, code: 200 })
-    expect(spySurvey).toHaveBeenCalled()
-    expect(spySurveyTwo).toHaveBeenCalled()
-    spySurvey.mockRestore();
-    spySurveyTwo.mockRestore()
-  })
-
-  it("getAllActivitiesIdsMethod should return survey but reject", async () => {
-    mockClient.search = function () { return Promise.reject()}
-    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    await expect(SurveyService.getAllActivitiesIds()).resolves.toEqual(new NotFoundResponse())
-    expect(spySurvey).toHaveBeenCalled()
-    expect(spySurveyTwo).toHaveBeenCalled()
-    spySurvey.mockRestore()
-    spySurveyTwo.mockRestore()
-  })
-
   function mockClientSearch() {
     mockClient.search = function () {
       return {

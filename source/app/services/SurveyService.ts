@@ -58,35 +58,6 @@ class SurveyService {
     }
   }
 
-  async getAllActivitiesIds(): Promise<IResponse> {
-    try {
-      const SIZE = 10000;
-      const SCROLL_TIME = "1m";
-      const indexName = ActivityExtractionService.getIndexName('*');
-
-      let surveyIdDict: any = {};
-      let body = await this.firstSearch(indexName, SIZE, SCROLL_TIME);
-
-      while (body.hits && (body.hits.hits.length)) {
-        body.hits.hits.forEach((hit: { _index: string, _source: { activityId: string } }) => {
-          let surveyId = ActivityExtractionService.extractSurveyIdFromIndexName(hit._index);
-          if (!surveyIdDict[surveyId]) {
-            surveyIdDict[surveyId] = [];
-          }
-          surveyIdDict[surveyId].push(hit._source.activityId);
-        });
-
-        body = await this.searchMore(body._scroll_id, SCROLL_TIME);
-      }
-
-      return new SuccessResponse(
-        Object.keys(surveyIdDict).map(surveyId => new SurveyActivityIdsFactory(surveyId, surveyIdDict[surveyId])));
-    }
-    catch (e) {
-      return new NotFoundResponse(e);
-    }
-  }
-
   private async findSurveyExtractions(surveyId: string) {
     const SIZE = 10000;
     const SCROLL_TIME = "1m";
@@ -138,6 +109,8 @@ class SurveyService {
 
     const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
       "/" + process.env.PLUMBER_RUNNER;
+
+    console.log("PLUMBER_URL", PLUMBER_URL)
 
     const resp = await axios({
       method: 'post',

@@ -102,24 +102,4 @@ describe('SurveyController.ts Tests', () => {
     spy.mockRestore();
   })
 
-  it("getAllActivitiesIdsMethod should resolve the request all Ids in activity", () => {
-    mockService.getAllActivitiesIds = jest.fn()
-    const spy = jest.spyOn(mockService, 'getAllActivitiesIds').mockResolvedValue(true)
-
-    SurveyController.getAllActivitiesIds(req, res)
-    expect(spy).toHaveBeenCalled()
-
-    spy.mockRestore();
-  })
-
-  it("getAllActivitiesIdsMethod should rejects the request all Ids in activity", () => {
-    mockService.getAllActivitiesIds = jest.fn()
-    const spy = jest.spyOn(mockService, 'getAllActivitiesIds').mockRejectedValue(false)
-
-    SurveyController.getAllActivitiesIds(req, res)
-    expect(spy).toHaveBeenCalled()
-
-    spy.mockRestore();
-  })
-
 })
