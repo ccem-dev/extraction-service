@@ -1,7 +1,7 @@
 import ActivityExtractionService from '../../../app/services/ActivityExtractionService'
 import ElasticsearchService from "../../../app/services/ElasticsearchService"
 import data from "../../data/json-importer.test"
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../../../app/utils/response';
+import { InternalServerErrorResponse, NotFoundResponse, SuccessResponse } from '../../../app/utils/response';
 
 jest.mock('../../../app/services/ElasticsearchService.ts')
 
