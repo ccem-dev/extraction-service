@@ -1,10 +1,9 @@
 import SurveyService from '../../../app/services/SurveyService'
 import ElasticsearchService from "../../../app/services/ElasticsearchService"
 import data from "../../data/json-importer.test"
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../../../app/utils/response';
+import { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../../../app/utils/response';
 import RscriptService from "../../../app/services/RscriptService"
 import ActivityExtractionService from "../../../app/services/ActivityExtractionService"
-import { error } from 'console';
 
 jest.mock('../../../app/services/ElasticsearchService.ts')
 
