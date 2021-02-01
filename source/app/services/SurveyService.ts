@@ -50,8 +50,11 @@ class SurveyService {
         .map((doc: { activityId: string }) => doc.activityId);
       return new SuccessResponse(activityIds);
     }
-    catch (e) {
-      return new NotFoundResponse(e);
+    catch (err) {
+      if(err.meta.body.error.type == "index_not_found_exception"){
+        return new SuccessResponse([]);
+      }
+      return new NotFoundResponse(err);
     }
   }
 
