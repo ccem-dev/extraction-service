@@ -1,4 +1,4 @@
-import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../utils/response'
+import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse } from '../utils/response'
 import ActivityEnum from "../enum/activityEnum"
 import ElasticsearchService from "./ElasticsearchService"
 import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
@@ -10,6 +10,10 @@ class ActivityExtractionService {
     return this.ACTIVITY_EXTRACTION_INDEX_SUFFIX + surveyId;
   }
 
+  extractSurveyIdFromIndexName(indexName: string) {
+    return indexName.replace(this.ACTIVITY_EXTRACTION_INDEX_SUFFIX, "");
+  }
+
   async create(extractions: any): Promise<IResponse> {
     let activityFillingList: any[]
     let activityNavigationTrackerItemsSkipped: any[]
@@ -18,7 +22,7 @@ class ActivityExtractionService {
     let dictionary: any
 
     try {
-      if (!extractions.activity) {
+      if (!extractions.activity || !extractions.activity.activityId) {
         return new NotFoundResponse({ message: "Activity not found" })
       }
 
@@ -26,8 +30,8 @@ class ActivityExtractionService {
       activityFillingList = this.jsonObject(extractions.activity.fillingList)
       activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems
 
-      if (!extractions.survey && !extractions.survey.itemContainer) {
-        return new NotFoundResponse({ message: "Survey not found" })
+      if (!extractions.survey || !extractions.survey.itemContainer) {
+        return new NotFoundResponse({ message: "Survey not found activityId " + extraction.getActivityId() })
       }
 
       surveyItemContainer = extractions.survey.itemContainer
@@ -39,7 +43,7 @@ class ActivityExtractionService {
       return new SuccessResponse()
     } catch (e) {
       console.error(e)
-      return new InternalServerErrorResponse(e)
+      return new InternalServerErrorResponse({ message: " Error SurveyId " + extractions.survey.id + " ActivityId " + extractions.activity.activityId })
     }
   }
 
@@ -57,7 +61,7 @@ class ActivityExtractionService {
         return new NotFoundResponse()
       }
       console.error(e)
-      return new InternalServerErrorResponse(e)
+      return new InternalServerErrorResponse({ message: " Error SurveyId " + surveyId + " ActivityId " + activityId })
     }
   }
 
@@ -73,8 +77,7 @@ class ActivityExtractionService {
         }
       })
     } catch (e) {
-      console.error(e)
-      throw new Error(e)
+      throw new Error("SurveyId: " + surveyId + " ActivityId: " + extractions.getActivityId() + " " + e)
     }
   }
 
