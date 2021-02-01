@@ -4,9 +4,9 @@
     "emitDecoratorMetadata": true,
     "module": "commonjs",
     "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
     "allowSyntheticDefaultImports": true,
     "target": "es6",
-    "esModuleInterop": true,
     "noImplicitAny": true,
     "moduleResolution": "node",
     "resolveJsonModule": true,
@@ -21,6 +21,7 @@
   },
   "include": [
     "app/**/*",
-    "config/**/*"
+    "config/**/*",
+    "tests/**/*"
   ]
 }
