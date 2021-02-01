@@ -51,7 +51,7 @@ class SurveyService {
       return new SuccessResponse(activityIds);
     }
     catch (err) {
-      if(err.meta.body.error.type == "index_not_found_exception"){
+      if (err.meta && err.meta.body.error.type == "index_not_found_exception"){
         return new SuccessResponse([]);
       }
       return new NotFoundResponse(err);

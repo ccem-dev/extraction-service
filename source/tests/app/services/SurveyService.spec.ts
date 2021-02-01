@@ -4,6 +4,7 @@ import data from "../../data/json-importer.test"
 import IResponse, { InternalServerErrorResponse, NotFoundResponse, SuccessResponse, NotAcceptableResponse } from '../../../app/utils/response';
 import RscriptService from "../../../app/services/RscriptService"
 import ActivityExtractionService from "../../../app/services/ActivityExtractionService"
+import { error } from 'console';
 
 jest.mock('../../../app/services/ElasticsearchService.ts')
 
@@ -81,13 +82,25 @@ describe('SurveyService.ts Tests', () => {
   })
 
   it("getSurveyActivitiesIdsMethod should return ids but reject", async () => {
-    mockClient.search = function () { return Promise.reject() }
+    mockClient.search = function () { return Promise.reject({}) }
     spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
 
-    await expect(SurveyService.getSurveyActivitiesIds(surveyId)).resolves.toEqual(new NotFoundResponse())
+    await expect(SurveyService.getSurveyActivitiesIds(surveyId)).resolves.toEqual(new NotFoundResponse({}))
     expect(spySurvey).toHaveBeenCalled()
 
     spySurvey.mockRestore();
+  })
+
+  it("getSurveyActivitiesIdsMethod should return survey but reject index not found exception", async () => {
+    let meta = { meta: { body: { error: { type: "index_not_found_exception" } } } }
+    mockClient.search = function () { return Promise.reject(meta) }
+    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
+    spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
+    await expect(SurveyService.getSurveyActivitiesIds(surveyId)).resolves.toEqual(new SuccessResponse([]))
+    expect(spySurvey).toHaveBeenCalled()
+    expect(spySurveyTwo).toHaveBeenCalled()
+    spySurvey.mockRestore()
+    spySurveyTwo.mockRestore()
   })
 
   it("getAllActivitiesIdsMethod should execute survey", async () => {
@@ -104,7 +117,7 @@ describe('SurveyService.ts Tests', () => {
   })
 
   it("getAllActivitiesIdsMethod should return survey but reject", async () => {
-    mockClient.search = function () { return Promise.reject() }
+    mockClient.search = function () { return Promise.reject()}
     spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
     spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
     await expect(SurveyService.getAllActivitiesIds()).resolves.toEqual(new NotFoundResponse())
