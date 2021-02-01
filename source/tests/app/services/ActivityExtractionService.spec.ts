@@ -49,7 +49,7 @@ describe('ActivityExtractionService.ts Tests', () => {
     MockClient.update = function () { return Promise.reject() }
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
 
-    await expect(ActivityExtractionService.create(extractionActivityAllData)).resolves.toEqual(new InternalServerErrorResponse(Error()))
+    await expect(ActivityExtractionService.create(extractionActivityAllData)).resolves.toEqual(new InternalServerErrorResponse({message: " Error SurveyId 5eb9523b075bcf399151a4e8 ActivityId 5a3aad9828f10d10437110de"}))
     expect(spyExtraction).toHaveBeenCalled()
 
     spyExtraction.mockRestore();
@@ -86,7 +86,7 @@ describe('ActivityExtractionService.ts Tests', () => {
     MockClient.delete = function () { return Promise.reject() }
     spyExtraction = jest.spyOn(mockExtraction, 'getClient').mockReturnValueOnce(MockClient)
 
-    await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new InternalServerErrorResponse())
+    await expect(ActivityExtractionService.remove(surveyId, activityId)).resolves.toEqual(new InternalServerErrorResponse({ message: " Error SurveyId 5e96287b5689ba37a74c7904 ActivityId 5a38062628f10d1043711079"}))
     expect(spyExtraction).toHaveBeenCalled()
 
     spyExtraction.mockRestore();

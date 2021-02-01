@@ -6,11 +6,11 @@ import ActivityExtractions from "../models/activity/ActivityExtractionFactory"
 class ActivityExtractionService {
   private readonly ACTIVITY_EXTRACTION_INDEX_SUFFIX = "extractions_survey_";
 
-  getIndexName(surveyId: string){
+  getIndexName(surveyId: string) {
     return this.ACTIVITY_EXTRACTION_INDEX_SUFFIX + surveyId;
   }
 
-  extractSurveyIdFromIndexName(indexName: string){
+  extractSurveyIdFromIndexName(indexName: string) {
     return indexName.replace(this.ACTIVITY_EXTRACTION_INDEX_SUFFIX, "");
   }
 
@@ -22,7 +22,7 @@ class ActivityExtractionService {
     let dictionary: any
 
     try {
-      if (!extractions.activity) {
+      if (!extractions.activity || !extractions.activity.activityId) {
         return new NotFoundResponse({ message: "Activity not found" })
       }
 
@@ -30,8 +30,8 @@ class ActivityExtractionService {
       activityFillingList = this.jsonObject(extractions.activity.fillingList)
       activityNavigationTrackerItemsSkipped = extractions.activity.navigationTrackingItems
 
-      if (!extractions.survey && !extractions.survey.itemContainer) {
-        return new NotFoundResponse({ message: "Survey not found" })
+      if (!extractions.survey || !extractions.survey.itemContainer) {
+        return new NotFoundResponse({ message: "Survey not found activityId " + extraction.getActivityId() })
       }
 
       surveyItemContainer = extractions.survey.itemContainer
@@ -43,14 +43,14 @@ class ActivityExtractionService {
       return new SuccessResponse()
     } catch (e) {
       console.error(e)
-      return new InternalServerErrorResponse(e)
+      return new InternalServerErrorResponse({ message: " Error SurveyId " + extractions.survey.id + " ActivityId " + extractions.activity.activityId })
     }
   }
 
   async remove(surveyId: string, activityId: string): Promise<IResponse> {
     try {
       await ElasticsearchService.getClient().delete({
-        index:  this.getIndexName(surveyId),
+        index: this.getIndexName(surveyId),
         id: activityId,
         refresh: true
       })
@@ -61,14 +61,14 @@ class ActivityExtractionService {
         return new NotFoundResponse()
       }
       console.error(e)
-      return new InternalServerErrorResponse(e)
+      return new InternalServerErrorResponse({ message: " Error SurveyId " + surveyId + " ActivityId " + activityId })
     }
   }
 
   private async createExtraction(surveyId: string, extractions: ActivityExtractions) {
     try {
       await ElasticsearchService.getClient().update({
-        index:  this.getIndexName(surveyId),
+        index: this.getIndexName(surveyId),
         id: extractions.getActivityId(),
         refresh: true,
         body: {
@@ -77,8 +77,7 @@ class ActivityExtractionService {
         }
       })
     } catch (e) {
-      console.error(e)
-      throw new Error(e)
+      throw new Error("SurveyId: " + surveyId + " ActivityId: " + extractions.getActivityId() + " " + e)
     }
   }
 
