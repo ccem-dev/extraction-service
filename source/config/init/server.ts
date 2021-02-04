@@ -5,23 +5,23 @@ const listEndpoints = require('express-list-endpoints');
 class Server {
 
   constructor() {
-    this.listen()
+    this.listen();
   }
 
   listen() {
     App.listen(process.env.API_PORT, () => {
     });
-    console.info(process.env.API_PORT)
+    console.info(process.env.API_PORT);
     this.endpointsList();
   }
 
   endpointsList() {
     let endpoints = listEndpoints(App);
-    console.table(endpoints)
+    console.table(endpoints);
   }
 
   public getApp(): Application {
-    return App
+    return App;
   }
 }
 export default new Server();

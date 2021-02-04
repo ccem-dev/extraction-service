@@ -43,6 +43,17 @@ export class NotFoundResponse implements IResponse {
   code: number;
 }
 
+export class AlreadyExistsResponse implements IResponse {
+  constructor(body: object = { message: "Already exists" }) {
+    this.code = 409;
+    this.body = { data: body };
+    return this;
+  }
+
+  body: object;
+  code: number;
+}
+
 export class ValidationResponse implements IResponse {
   constructor(body: object = { message: "Malformed Data" }) {
     this.code = 400;

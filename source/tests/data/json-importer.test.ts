@@ -18,7 +18,7 @@ data.activity = {
   "paper_interviewer": "",
   "last_finalization_date": "2020-12-18T16:55:55.511",
   "external_id": "123",
-  "fillingList": JSON.stringify( [
+  "fillingList": JSON.stringify([
     {
       "objectType": "QuestionFill",
       "questionID": "ACTDC1",
@@ -4884,8 +4884,23 @@ data.activity = {
     }
   }
 data.client = {
+  scroll: function (obj: any) { return { body: {}, scroll: {} } },
   index: function (obj: any) { return { body: { _id: "1067FXMBfnuOBlCe39eo" } } },
-  search: function (obj: any) { return {} },
+  search: function (obj: any) {
+    return {
+      body: {
+        hits: {
+          hits: [{
+            _index: "",
+            _source: {
+              activityId: "123456"
+            }
+          }]
+        },
+        _scroll_id: "123"
+      }
+    }
+  },
   get: function (obj: any) { return {} },
   update: function (obj: any) { return {} },
   exists: function (obj: any) { return {} },
