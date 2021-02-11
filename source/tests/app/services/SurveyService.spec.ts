@@ -8,24 +8,32 @@ import ActivityExtractionService from "../../../app/services/ActivityExtractionS
 jest.mock('../../../app/services/ElasticsearchService.ts')
 
 describe('SurveyService.ts Tests', () => {
-  let surveyId: string = "123"
-  let name: string = "Fulano"
-  let script: string = "scripts"
-  let mockClient = data.client
-  let mockElastic: any
-  let spySurvey: any
-  let spySurveyTwo: any
+  const SURVEY_ID: string = "123";
+  const R_SCRIPT_NAME: string = "script";
+  let mockClient = data.client;
+  let mockElastic: any;
+  let spySurvey: any;
+  let spySurveyTwo: any;
 
   beforeEach(function () {
     mockElastic = ElasticsearchService as jest.Mocked<typeof ElasticsearchService>
-  })
+  });
 
   it("performRscriptExtractionMethod create values rscript but not found", async () => {
     let rscriptService = jest.spyOn(RscriptService, "get")
     spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
     spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
 
-    await expect(SurveyService.performRscript(surveyId, name)).resolves.toEqual({ "body": { "data": "R script Fulano was not found" }, "code": 404 });
+    const expectedResponseBody = {
+      body: {
+        data: {
+          data: "R script {"+R_SCRIPT_NAME+"} does not exists"
+        }
+      },
+      code: 404
+    };
+
+    await expect(SurveyService.performRscript(SURVEY_ID, R_SCRIPT_NAME)).resolves.toEqual(expectedResponseBody);
     expect(spySurvey).toHaveBeenCalled()
     expect(rscriptService).toHaveBeenCalled()
     expect(spySurveyTwo).toHaveBeenCalled()
@@ -37,16 +45,18 @@ describe('SurveyService.ts Tests', () => {
   it("performRscriptExtractionMethod should create values but reject", async () => {
     mockClient.search = function () { return Promise.reject() }
     spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    await expect(SurveyService.performRscript(name, script)).resolves.toEqual(new NotFoundResponse());
-    expect(spySurvey).toHaveBeenCalled()
+    await expect(SurveyService.performRscript(SURVEY_ID, R_SCRIPT_NAME)).resolves.toEqual(new NotFoundResponse({
+      data: "R script {"+R_SCRIPT_NAME+"} does not exists"
+    }));
+    expect(spySurvey).toHaveBeenCalled();
     spySurvey.mockRestore();
-  })
+  });
 
   it("performAsJsonMethod should return value survey", async () => {
     mockClientSearch()
     spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
     spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    await expect(SurveyService.performAsJson(name)).resolves.toEqual({ body: { data: [{ "activityId": "123456" }] }, "code": 200 });
+    await expect(SurveyService.performAsJson(R_SCRIPT_NAME)).resolves.toEqual({ body: { data: [{ "activityId": "123456" }] }, "code": 200 });
     expect(spySurvey).toHaveBeenCalled()
     expect(spySurveyTwo).toHaveBeenCalled()
     spySurvey.mockRestore()
@@ -56,7 +66,7 @@ describe('SurveyService.ts Tests', () => {
   it("performAsJsonMethod should return values but reject", async () => {
     mockClient.search = function () { return Promise.reject() }
     spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    await expect(SurveyService.performAsJson(name)).resolves.toEqual(new NotFoundResponse());
+    await expect(SurveyService.performAsJson(R_SCRIPT_NAME)).resolves.toEqual(new NotFoundResponse());
     expect(spySurvey).toHaveBeenCalled()
     spySurvey.mockRestore();
   })
@@ -65,42 +75,42 @@ describe('SurveyService.ts Tests', () => {
     mockClientSearch()
     spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
     spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    await expect(SurveyService.performAsCsv(name)).resolves.toEqual({ body: { data: { "header": ["activityId"], "values": [["123456"],], } }, "code": 200 })
-    expect(spySurvey).toHaveBeenCalled()
-    expect(spySurveyTwo).toHaveBeenCalled()
-    spySurveyTwo.mockRestore()
+    await expect(SurveyService.performAsCsv(R_SCRIPT_NAME)).resolves.toEqual({ body: { data: { "header": ["activityId"], "values": [["123456"],], } }, "code": 200 })
+    expect(spySurvey).toHaveBeenCalled();
+    expect(spySurveyTwo).toHaveBeenCalled();
+    spySurveyTwo.mockRestore();
     spySurvey.mockRestore();
-  })
+  });
 
   it("performAsCsvMethod should return survey throw data not found", async () => {
-    mockClient.search = function () { return Promise.reject() }
-    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    await expect(SurveyService.performAsCsv(name)).resolves.toEqual(new NotFoundResponse())
-    expect(spySurvey).toHaveBeenCalled()
-    spySurvey.mockRestore()
-  })
+    mockClient.search = function () { return Promise.reject() };
+    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient);
+    await expect(SurveyService.performAsCsv(R_SCRIPT_NAME)).resolves.toEqual(new NotFoundResponse());
+    expect(spySurvey).toHaveBeenCalled();
+    spySurvey.mockRestore();
+  });
 
   it("getSurveyActivitiesIdsMethod should return ids but reject", async () => {
     mockClient.search = function () { return Promise.reject({}) }
-    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
+    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient);
 
-    await expect(SurveyService.getSurveyActivitiesIds(surveyId)).resolves.toEqual(new NotFoundResponse({}))
-    expect(spySurvey).toHaveBeenCalled()
+    await expect(SurveyService.getSurveyActivitiesIds(SURVEY_ID)).resolves.toEqual(new NotFoundResponse({}));
+    expect(spySurvey).toHaveBeenCalled();
 
     spySurvey.mockRestore();
-  })
+  });
 
   it("getSurveyActivitiesIdsMethod should return survey but reject index not found exception", async () => {
-    let meta = { meta: { body: { error: { type: "index_not_found_exception" } } } }
-    mockClient.search = function () { return Promise.reject(meta) }
-    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient)
-    await expect(SurveyService.getSurveyActivitiesIds(surveyId)).resolves.toEqual(new SuccessResponse([]))
-    expect(spySurvey).toHaveBeenCalled()
-    expect(spySurveyTwo).toHaveBeenCalled()
-    spySurvey.mockRestore()
-    spySurveyTwo.mockRestore()
-  })
+    const META = { meta: { body: { error: { type: "index_not_found_exception" } } } };
+    mockClient.search = function () { return Promise.reject(META) };
+    spySurvey = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient);
+    spySurveyTwo = jest.spyOn(mockElastic, 'getClient').mockReturnValueOnce(mockClient);
+    await expect(SurveyService.getSurveyActivitiesIds(SURVEY_ID)).resolves.toEqual(new NotFoundResponse(META));
+    expect(spySurvey).toHaveBeenCalled();
+    expect(spySurveyTwo).toHaveBeenCalled();
+    spySurvey.mockRestore();
+    spySurveyTwo.mockRestore();
+  });
 
   function mockClientSearch() {
     mockClient.search = function () {
