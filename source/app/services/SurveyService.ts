@@ -127,6 +127,9 @@ class SurveyService {
       maxContentLength: parseInt(process.env.MAX_CONTENT_LENGTH),
       maxBodyLength: parseInt(process.env.MAX_BODY_LENGTH)
     }).catch((err: any) => {
+      if(err.message.includes(process.env.PLUMBER_HOSTNAME)){
+        throw {data: "R service connection refused"};
+      }
       throw err;
     });
 
