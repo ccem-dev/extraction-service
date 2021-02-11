@@ -35,7 +35,12 @@ class ElasticsearchService {
   }
 
   isIndexNotFoundError(err: any){
-    return err.meta && err.meta.body.error.type == "index_not_found_exception";
+    try{
+      return err.meta.body.error.type == "index_not_found_exception";
+    }
+    catch(e){
+      return false;
+    }
   }
 
   private createClient() {
