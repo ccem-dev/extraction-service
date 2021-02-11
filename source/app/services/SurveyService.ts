@@ -1,4 +1,4 @@
-import IResponse, { NotFoundResponse, SuccessResponse } from '../utils/response';
+import IResponse, { NotFoundResponse, SuccessResponse, InternalServerErrorResponse } from '../utils/response';
 import ElasticsearchService from "./ElasticsearchService";
 import RscriptService from "./RscriptService";
 import CsvService from "../utils/CsvService";
@@ -11,16 +11,30 @@ const axios = require('axios').default;
 class SurveyService {
 
   async performRscript(surveyId: string, RscriptName: string): Promise<IResponse> {
-    try {
-      let response = await this.findSurveyExtractions(surveyId);
-      response = await this.applyRscriptToResponse(RscriptName, response);
-      if (typeof response == 'string') {
-        return new SuccessResponse(await CsvService.createCsvFromString(response));
-      }
-      return new SuccessResponse(response);
+    const rscript = (await RscriptService.get(RscriptName)).body.data;
+    if (!rscript.script) {
+      return new NotFoundResponse({ data :'R script {' + RscriptName + '} does not exists' });
     }
-    catch (e) {
-      return new NotFoundResponse(e);
+
+    let extractions;
+    try{
+      extractions = await this.findSurveyExtractions(surveyId);
+    }
+    catch (err) {
+      if(!ElasticsearchService.isIndexNotFoundError(err)){
+        return new InternalServerErrorResponse(err);
+      }
+      return new NotFoundResponse( { data: 'There is no activity extractions for desired survey'});
+    }
+
+    try {
+      return new SuccessResponse(await this.applyRscriptToResponse(rscript.script, extractions));
+    }
+    catch (err) {
+      if(err.message.includes(process.env.PLUMBER_HOSTNAME)){
+        return new NotFoundResponse( { data: "R service connection refused"});
+      }
+      return new InternalServerErrorResponse(err);
     }
   }
 
@@ -51,7 +65,7 @@ class SurveyService {
       return new SuccessResponse(activityIds);
     }
     catch (err) {
-      if (err.meta && err.meta.body.error.type == "index_not_found_exception"){
+      if (ElasticsearchService.isIndexNotFoundError(err)){
         return new SuccessResponse([]);
       }
       return new NotFoundResponse(err);
@@ -101,22 +115,15 @@ class SurveyService {
     return body;
   }
 
-  private async applyRscriptToResponse(RscriptName: string, response: any[]) {
-    const rscript = (await RscriptService.get(RscriptName)).body.data;
-    if (!rscript.script) {
-      throw 'R script ' + RscriptName + ' was not found';
-    }
-
+  private async applyRscriptToResponse(rscript: string, response: any[]) {
     const PLUMBER_URL = process.env.PLUMBER_PROTOCOL + "://" + process.env.PLUMBER_HOSTNAME + ":" + process.env.PLUMBER_PORT +
       "/" + process.env.PLUMBER_RUNNER;
-
-    console.log("PLUMBER_URL", PLUMBER_URL)
 
     const resp = await axios({
       method: 'post',
       url: PLUMBER_URL,
       data: {
-        "script": rscript.script,
+        "script": rscript,
         "arg": response
       },
       headers: { 'Accept': 'application/json', 'Content-Type': 'application/json' },
@@ -125,7 +132,12 @@ class SurveyService {
     }).catch((err: any) => {
       throw err;
     });
-    return resp.data;
+
+    if (typeof resp.data != 'string') {
+      return resp.data;
+    }
+
+    return await CsvService.createCsvFromString(resp.data);
   }
 
 }

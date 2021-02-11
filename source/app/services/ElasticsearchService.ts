@@ -3,7 +3,7 @@ import ShutdownEventService from '../utils/ShutdownEventService';
 
 class ElasticsearchService {
   private readonly CLIENT_URL = process.env.ELASTICSEARCH_PROTOCOL + '://' + process.env.ELASTICSEARCH_HOSTNAME + ":" + process.env.ELASTICSEARCH_PORT;
-  
+
   private configReady: boolean;
   private client: Client;
 
@@ -32,6 +32,15 @@ class ElasticsearchService {
 
   getState() {
     return this.configReady;
+  }
+
+  isIndexNotFoundError(err: any){
+    try{
+      return err.meta.body.error.type == "index_not_found_exception";
+    }
+    catch(e){
+      return false;
+    }
   }
 
   private createClient() {

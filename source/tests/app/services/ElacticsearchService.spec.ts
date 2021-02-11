@@ -31,4 +31,14 @@ describe('ElasticsearchService.ts Tests', function () {
     expect(ElasticsearchService.getState()).toBe(true);
   });
 
+  test('isIndexNotFoundError should return true', async function () {
+    const err = { meta: { body: { error: {type: "index_not_found_exception" } } } };
+    expect(ElasticsearchService.isIndexNotFoundError(err)).toBe(true);
+  });
+
+  test('isIndexNotFoundError should return false', async function () {
+    const err = { data: {} };
+    expect(ElasticsearchService.isIndexNotFoundError(err)).toBe(false);
+  });
+
 });
