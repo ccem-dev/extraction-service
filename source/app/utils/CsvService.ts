@@ -43,6 +43,19 @@ class CsvService {
     }
   }
 
+  async createCsvFromLinesArray(lines: any[]) : Promise<Object> {
+    let header = lines[0];
+    let values = lines.slice(1, lines.length);
+    if(typeof lines[0] == 'string'){
+      header = header.split(DELIMITER);
+      values = values.map(line => line.split(DELIMITER));
+    }
+    return {
+      header: header,
+      values: values
+    }
+  }
+
 }
 
 export default new CsvService();
