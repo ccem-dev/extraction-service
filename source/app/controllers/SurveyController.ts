@@ -5,7 +5,7 @@ class SurveyController {
 
   performRscript(req: Request, res: Response): void {
     SurveyService.performRscript(req.body.surveyId, req.body.RscriptName)
-      .then(result => res.status(result.code).send(result.body.data))
+      .then(result => res.status(result.code).send(result.body))
       .catch(err => res.status(err.code).send(err.body));
   }
 
