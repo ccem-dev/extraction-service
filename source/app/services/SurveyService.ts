@@ -22,6 +22,7 @@ class SurveyService {
     }
     catch (err) {
       if(!ElasticsearchService.isIndexNotFoundError(err)){
+        console.error(err);
         return new InternalServerErrorResponse(err);
       }
       return new NotFoundResponse( { data: 'There is no activity extractions for desired survey'});
@@ -130,14 +131,17 @@ class SurveyService {
       maxContentLength: parseInt(process.env.MAX_CONTENT_LENGTH),
       maxBodyLength: parseInt(process.env.MAX_BODY_LENGTH)
     }).catch((err: any) => {
+      console.error(err);
       throw err;
     });
 
-    if (typeof resp.data != 'string') {
-      return resp.data;
+    if(typeof resp.data == 'string'){
+      return await CsvService.createCsvFromString(resp.data);
     }
-
-    return await CsvService.createCsvFromString(resp.data);
+    if (Array.isArray(resp.data) && typeof resp.data[0] == 'string') {
+      return await CsvService.createCsvFromLinesArray(resp.data);
+    }
+    return resp.data;
   }
 
 }
