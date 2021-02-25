@@ -1,0 +1,14 @@
+source/node_modules/
+dist
+.idea/
+**/package-lock.json
+terraform.*
+.terraform
+.terraform.lock.hcl
+**/*swp
+**/.npmrc
+**/dist
+source/coverage
+source/.coverage
+.vscode
+*.orig
